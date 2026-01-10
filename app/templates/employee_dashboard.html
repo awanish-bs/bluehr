@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Employee Dashboard</h2>
+  <h3>Your Payslips</h3>
+  <ul class="list-group">
+    {% for payslip in payslips %}
+      <li class="list-group-item">
+        <a href="{{ url_for('static', filename=payslip.file_path) }}" target="_blank">
+          Payslip - {{ payslip.upload_date.strftime('%Y-%m-%d') }}
+        </a>
+      </li>
+    {% else %}
+      <li class="list-group-item">No payslips found.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

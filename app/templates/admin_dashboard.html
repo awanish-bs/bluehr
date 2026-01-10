@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Admin Dashboard</h2>
+  <h3>Upload Payslip</h3>
+  <form method="post" action="{{ url_for('upload_payslip') }}" enctype="multipart/form-data">
+    <div class="form-group">
+      <label for="employee_id">Select Employee</label>
+      <select class="form-control" id="employee_id" name="employee_id">
+        {% for employee in employees %}
+          <option value="{{ employee.id }}">{{ employee.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="payslip">Payslip File</label>
+      <input type="file" class="form-control-file" id="payslip" name="payslip" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Upload</button>
+  </form>
+{% endblock %}
