@@ -210,3 +210,23 @@ def admin_delete_user(user_id):
     flash(f'User {user_first_name} and all associated data have been deleted successfully.')
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin_edit_user/<int:user_id>', methods=['POST'])
+@login_required
+def admin_edit_user(user_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('index'))
+    
+    user = User.query.get(user_id)
+    if not user:
+        flash('User not found.')
+        return redirect(url_for('admin_dashboard'))
+
+    user.first_name = request.form['first_name']
+    user.last_name = request.form['last_name']
+    user.email = request.form['email']
+    
+    db.session.commit()
+    flash(f'User {user.first_name} has been updated.')
+    return redirect(url_for('admin_dashboard'))
+
