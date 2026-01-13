@@ -20,6 +20,8 @@ class User(db.Model, UserMixin):
     reset_token = db.Column(db.String(100), unique=True)
     reset_token_expiry = db.Column(db.DateTime)
     payslips = db.relationship('Payslip', backref='employee', lazy='dynamic')
+    profile = db.relationship('Profile', back_populates='user', uselist=False, cascade="all, delete-orphan")
+    profile = db.relationship('Profile', back_populates='user', uselist=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -43,3 +45,15 @@ class Payslip(db.Model):
     file_path = db.Column(db.String(256))
     month_year = db.Column(db.String(7))  # Format: YYYY-MM
     upload_date = db.Column(db.DateTime, server_default=db.func.now())
+
+class Profile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date_of_birth = db.Column(db.Date)
+    address = db.Column(db.String(256))
+    aadhar_number = db.Column(db.String(12), unique=True)
+    pan_number = db.Column(db.String(10), unique=True)
+    bank_name = db.Column(db.String(128))
+    bank_account_number = db.Column(db.String(32))
+    ifsc_code = db.Column(db.String(11))
+    user = db.relationship('User', back_populates='profile')

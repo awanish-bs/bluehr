@@ -1,92 +1,32 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="d-flex justify-content-between align-items-center">
-    <h2>Employee Dashboard</h2>
-    <button id="profileBtn" class="d-flex align-items-center" style="background: none; border: none; box-shadow: none; color: #333; text-decoration: none; padding: 0.25rem 0.5rem;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-circle mr-1" viewBox="0 0 16 16">
-        <path d="M11 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
-        <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM4.285 12.433A5.978 5.978 0 0 0 8 13c1.306 0 2.518-.418 3.515-1.124C11.138 11.112 9.522 10 8 10s-3.138 1.112-3.715 2.433z"/>
-      </svg>
-      <span>User</span>
-    </button>
-    <!-- Right pane for user details -->
-    <div id="profilePane" style="display:none; position:fixed; top:0; right:0; height:100%; width:350px; background:#fff; box-shadow:-2px 0 8px rgba(0,0,0,0.1); z-index:1050; overflow-y:auto;">
-      <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
-        <h4 class="mb-0">Account Details</h4>
-        <button id="closeProfilePane" class="btn btn-sm btn-light">&times;</button>
-      </div>
-      <div class="p-3">
-        <ul class="list-group list-group-flush">
-          <li class="list-group-item"><strong>First Name:</strong> {{ current_user.first_name }}</li>
-          <li class="list-group-item"><strong>Last Name:</strong> {{ current_user.last_name }}</li>
-          <li class="list-group-item"><strong>Employee ID:</strong> {{ current_user.employee_id }}</li>
-          <li class="list-group-item"><strong>Email ID:</strong> {{ current_user.email }}</li>
-          <li class="list-group-item"><strong>Phone Number:</strong> {{ current_user.phone_number }}</li>
-        </ul>
-      </div>
-    </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var profileBtn = document.getElementById('profileBtn');
-      var profilePane = document.getElementById('profilePane');
-      var closeBtn = document.getElementById('closeProfilePane');
-      if (profileBtn && profilePane && closeBtn) {
-        profileBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          profilePane.style.display = 'block';
-        });
-        closeBtn.addEventListener('click', function() {
-          profilePane.style.display = 'none';
-        });
-      }
-    });
-  </script>
-  </div>
+  <h2>Employee Dashboard</h2>
+
   <ul class="nav nav-tabs" id="employeeTab" role="tablist">
     <li class="nav-item">
-      <a class="nav-link active" id="finance-tab" data-toggle="tab" href="#finance" role="tab" aria-controls="finance" aria-selected="true">Finance</a>
+      <a class="nav-link active" id="payslips-tab" data-toggle="tab" href="#payslips" role="tab" aria-controls="payslips" aria-selected="true">My Payslips</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" id="hr-tab" data-toggle="tab" href="#hr" role="tab" aria-controls="hr" aria-selected="false">HR</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" id="others-tab" data-toggle="tab" href="#others" role="tab" aria-controls="others" aria-selected="false">Others</a>
+      <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Profile</a>
     </li>
   </ul>
+
   <div class="tab-content mt-3" id="employeeTabContent">
-    <div class="tab-pane fade show active" id="finance" role="tabpanel" aria-labelledby="finance-tab">
-      <h3>Your Payslips</h3>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Month and Year</th>
-            <th>Payslip</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for payslip in payslips %}
-            <tr>
-              <td>{{ payslip.month_year }}</td>
-              <td>
-                <a href="{{ url_for('static', filename=payslip.file_path) }}" target="_blank">
-                  View Payslip
-                </a>
-              </td>
-            </tr>
-          {% else %}
-            <tr>
-              <td colspan="2">No payslips found.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="tab-pane fade show active" id="payslips" role="tabpanel" aria-labelledby="payslips-tab">
+      <h3>My Payslips</h3>
+      <div class="list-group">
+        {% for payslip in payslips %}
+          <a href="{{ url_for('static', filename=payslip.file_path) }}" class="list-group-item list-group-item-action" target="_blank">
+            Payslip for {{ payslip.month_year }} (Uploaded on: {{ payslip.upload_date.strftime('%Y-%m-%d') }})
+          </a>
+        {% else %}
+          <p>No payslips found.</p>
+        {% endfor %}
+      </div>
     </div>
-    <div class="tab-pane fade" id="hr" role="tabpanel" aria-labelledby="hr-tab">
-      <p>WIP</p>
-    </div>
-    <div class="tab-pane fade" id="others" role="tabpanel" aria-labelledby="others-tab">
-      <p>WIP</p>
+    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+      {% include 'profile.html' %}
     </div>
   </div>
 {% endblock %}

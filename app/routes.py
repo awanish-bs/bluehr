@@ -1,9 +1,10 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from app import app, db
-from app.models import User, Payslip
+from app.models import User, Payslip, Profile
 from werkzeug.utils import secure_filename
 import os
+from datetime import datetime
 
 
 # Route to delete all users except current admin
@@ -13,12 +14,20 @@ def admin_delete_all_users():
     if not current_user.is_admin:
         flash('Access denied.')
         return redirect(url_for('index'))
-    # Delete all payslips first
-    Payslip.query.delete()
-    # Delete all users except current admin
-    User.query.filter(User.id != current_user.id).delete()
+
+    # Find all users to delete
+    users_to_delete = User.query.filter(User.id != current_user.id).all()
+    for user in users_to_delete:
+        # Delete associated profiles
+        if user.profile:
+            db.session.delete(user.profile)
+        # Delete associated payslips
+        Payslip.query.filter_by(user_id=user.id).delete()
+        # Delete the user
+        db.session.delete(user)
+
     db.session.commit()
-    flash('All users (except current admin) and all payslips have been deleted.')
+    flash('All users (except current admin) and all associated data have been deleted.')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/', methods=['GET', 'POST'])
@@ -57,13 +66,36 @@ def employee_dashboard():
     if current_user.is_admin:
         return redirect(url_for('admin_dashboard'))
     payslips = current_user.payslips.all()
-    return render_template('employee_dashboard.html', payslips=payslips)
+    return render_template('employee_dashboard.html', payslips=payslips, user=current_user)
 
 
 # User profile page
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+    if not current_user.profile:
+        profile = Profile(user_id=current_user.id)
+        db.session.add(profile)
+        db.session.commit()
+
+    if request.method == 'POST':
+        current_user.first_name = request.form['first_name']
+        current_user.last_name = request.form['last_name']
+        current_user.email = request.form['email']
+        current_user.phone_number = request.form['phone_number']
+        
+        current_user.profile.date_of_birth = datetime.strptime(request.form['date_of_birth'], '%Y-%m-%d').date() if request.form['date_of_birth'] else None
+        current_user.profile.address = request.form['address']
+        current_user.profile.aadhar_number = request.form['aadhar_number'] or None
+        current_user.profile.pan_number = request.form['pan_number'] or None
+        current_user.profile.bank_name = request.form['bank_name']
+        current_user.profile.bank_account_number = request.form['bank_account_number']
+        current_user.profile.ifsc_code = request.form['ifsc_code']
+        
+        db.session.commit()
+        flash('Your profile has been updated.')
+        return redirect(url_for('employee_dashboard', _anchor='profile'))
+        
     return render_template('profile.html', user=current_user)
 
 @app.route('/admin_dashboard')
@@ -148,7 +180,7 @@ def admin_reset_password(user_id):
     new_password = request.form['new_password']
     user.set_password(new_password)
     db.session.commit()
-    flash(f'Password reset successfully for user {user.username}.')
+    flash(f'Password reset successfully for user {user.first_name}.')
     return redirect(url_for('admin_dashboard'))
 
 # Admin Delete User
@@ -169,12 +201,12 @@ def admin_delete_user(user_id):
         flash('You cannot delete your own account.')
         return redirect(url_for('admin_dashboard'))
     
-    username = user.username
+    user_first_name = user.first_name
     # Delete associated payslips first
     Payslip.query.filter_by(user_id=user.id).delete()
     # Delete the user
     db.session.delete(user)
     db.session.commit()
-    flash(f'User {username} and all associated data have been deleted successfully.')
+    flash(f'User {user_first_name} and all associated data have been deleted successfully.')
     return redirect(url_for('admin_dashboard'))
 
