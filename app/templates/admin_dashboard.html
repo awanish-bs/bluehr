@@ -84,6 +84,8 @@
               var payslipsIcon = document.getElementById('iconPayslips');
               var uploadSection = document.getElementById('collapseUpload');
               var uploadIcon = document.getElementById('iconUpload');
+              var createUserSection = document.getElementById('collapseCreateUser');
+              var createUserIcon = document.getElementById('iconCreateUser');
               if (payslipsSection && payslipsIcon) {
                 payslipsSection.addEventListener('show.bs.collapse', function() { toggleIcon(payslipsSection, 'iconPayslips'); });
                 payslipsSection.addEventListener('hide.bs.collapse', function() { toggleIcon(payslipsSection, 'iconPayslips'); });
@@ -93,6 +95,11 @@
                 uploadSection.addEventListener('show.bs.collapse', function() { toggleIcon(uploadSection, 'iconUpload'); });
                 uploadSection.addEventListener('hide.bs.collapse', function() { toggleIcon(uploadSection, 'iconUpload'); });
                 toggleIcon(uploadSection, 'iconUpload');
+              }
+              if (createUserSection && createUserIcon) {
+                createUserSection.addEventListener('show.bs.collapse', function() { toggleIcon(createUserSection, 'iconCreateUser'); });
+                createUserSection.addEventListener('hide.bs.collapse', function() { toggleIcon(createUserSection, 'iconCreateUser'); });
+                toggleIcon(createUserSection, 'iconCreateUser');
               }
             });
           </script>
@@ -217,6 +224,76 @@
       <p>WIP</p>
     </div>
     <div class="tab-pane fade" id="admin" role="tabpanel" aria-labelledby="admin-tab">
+      <!-- Create User Section -->
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" id="headingCreateUser" style="cursor:pointer;" data-toggle="collapse" data-target="#collapseCreateUser" aria-expanded="false" aria-controls="collapseCreateUser">
+          <h4 class="mb-0">Create New User</h4>
+          <span class="collapse-icon text-white" id="iconCreateUser">&#9654;</span>
+        </div>
+        <div id="collapseCreateUser" class="collapse" aria-labelledby="headingCreateUser">
+          <div class="card-body">
+          <form method="post" action="{{ url_for('admin_create_user') }}" novalidate id="adminCreateUserForm">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="admin_first_name">First Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="admin_first_name" name="first_name" required>
+                  <div class="invalid-feedback">First Name is required.</div>
+                </div>
+                <div class="form-group">
+                  <label for="admin_last_name">Last Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="admin_last_name" name="last_name" required>
+                  <div class="invalid-feedback">Last Name is required.</div>
+                </div>
+                <div class="form-group">
+                  <label for="admin_employee_id">Employee ID <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="admin_employee_id" name="employee_id" required>
+                  <div class="invalid-feedback">Employee ID is required and must be numeric.</div>
+                </div>
+                <div class="form-group">
+                  <label for="admin_email">Email <span class="text-danger">*</span></label>
+                  <input type="email" class="form-control" id="admin_email" name="email" required>
+                  <div class="invalid-feedback">Please enter a valid email address.</div>
+                </div>
+                <div class="form-group">
+                  <label for="admin_phone_number">Phone Number</label>
+                  <input type="tel" class="form-control" id="admin_phone_number" name="phone_number">
+                  <div class="invalid-feedback">Phone number must be exactly 10 digits.</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="admin_aadhar_number">Aadhar Number</label>
+                  <input type="text" class="form-control" id="admin_aadhar_number" name="aadhar_number">
+                  <div class="invalid-feedback">Aadhar must be exactly 12 digits.</div>
+                </div>
+                <div class="form-group">
+                  <label for="admin_pan_number">PAN Number</label>
+                  <input type="text" class="form-control" id="admin_pan_number" name="pan_number">
+                  <div class="invalid-feedback">PAN must be alphanumeric and 10 characters long.</div>
+                </div>
+                <div class="form-group">
+                  <label for="admin_bank_account_number">Bank Account Number</label>
+                  <input type="text" class="form-control" id="admin_bank_account_number" name="bank_account_number">
+                  <div class="invalid-feedback">Bank account number must be numeric.</div>
+                </div>
+                <div class="form-group">
+                  <label for="admin_password">Password <span class="text-danger">*</span></label>
+                  <input type="password" class="form-control" id="admin_password" name="password" required>
+                  <div class="invalid-feedback">Password is required.</div>
+                </div>
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="admin_is_admin" name="is_admin">
+                  <label class="form-check-label" for="admin_is_admin">Is Admin</label>
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success">Create User</button>
+          </form>
+        </div>
+      </div>
+      <br><br>
+
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>All Users</h3>
         <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteAllUsersModal">
@@ -452,6 +529,81 @@
           const tbody = document.getElementById('document-list-body');
           tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading documents.</td></tr>';
         });
+    }
+
+    // Admin Create User Form Validation
+    const adminCreateUserForm = document.getElementById('adminCreateUserForm');
+    if (adminCreateUserForm) {
+      const adminValidations = {
+        first_name: { required: true, message: 'First Name is required.' },
+        last_name: { required: true, message: 'Last Name is required.' },
+        employee_id: { required: true, pattern: /^[0-9]+$/, message: 'Employee ID is required and must be numeric.' },
+        email: { required: true, pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: 'Please enter a valid email address.' },
+        phone_number: { required: false, pattern: /^[0-9]{10}$/, message: 'Phone number must be exactly 10 digits.' },
+        aadhar_number: { required: false, pattern: /^[0-9]{12}$/, message: 'Aadhar must be exactly 12 digits.' },
+        pan_number: { required: false, pattern: /^[A-Za-z0-9]{10}$/, message: 'PAN must be alphanumeric and 10 characters long.' },
+        bank_account_number: { required: false, pattern: /^[0-9]+$/, message: 'Bank account number must be numeric.' },
+        password: { required: true, message: 'Password is required.' }
+      };
+
+      function validateAdminField(field) {
+        const value = field.value.trim();
+        const rules = adminValidations[field.name];
+        if (!rules) return true;
+
+        const feedback = field.nextElementSibling;
+        
+        // Check required
+        if (rules.required && !value) {
+          field.classList.add('is-invalid');
+          field.classList.remove('is-valid');
+          if (feedback) feedback.textContent = rules.message;
+          return false;
+        }
+        
+        // Check pattern (only if value is not empty)
+        if (value && rules.pattern && !rules.pattern.test(value)) {
+          field.classList.add('is-invalid');
+          field.classList.remove('is-valid');
+          if (feedback) feedback.textContent = rules.message;
+          return false;
+        }
+        
+        field.classList.remove('is-invalid');
+        if (value) field.classList.add('is-valid');
+        return true;
+      }
+
+      // Validate on blur for admin form fields
+      Object.keys(adminValidations).forEach(function(fieldName) {
+        const field = document.getElementById('admin_' + fieldName);
+        if (field) {
+          field.addEventListener('blur', function() {
+            validateAdminField(this);
+          });
+          field.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid')) {
+              validateAdminField(this);
+            }
+          });
+        }
+      });
+
+      // Validate on submit for admin form
+      adminCreateUserForm.addEventListener('submit', function(e) {
+        let isValid = true;
+        Object.keys(adminValidations).forEach(function(fieldName) {
+          const field = document.getElementById('admin_' + fieldName);
+          if (field && !validateAdminField(field)) {
+            isValid = false;
+          }
+        });
+        
+        if (!isValid) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      });
     }
   </script>
 {% endblock %}

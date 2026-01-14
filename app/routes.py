@@ -175,7 +175,13 @@ def upload_payslip():
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/create_user', methods=['GET', 'POST'])
+@login_required
 def create_user():
+    # Only allow admin access to this route
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+    
     if request.method == 'POST':
         import re
         first_name = request.form['first_name']
@@ -258,8 +264,105 @@ def create_user():
             db.session.add(profile)
             db.session.commit()
         flash('User created successfully')
-        return redirect(url_for('index'))
+        return redirect(url_for('admin_dashboard'))
     return render_template('create_user.html')
+
+@app.route('/admin/create_user', methods=['POST'])
+@login_required
+def admin_create_user():
+    # Only allow admin access to this route
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+    
+    import re
+    first_name = request.form['first_name']
+    last_name = request.form['last_name']
+    employee_id = request.form['employee_id']
+    email = request.form['email']
+    phone_number = request.form.get('phone_number', '')
+    password = request.form['password']
+    is_admin = 'is_admin' in request.form
+    aadhar_number = request.form.get('aadhar_number', '')
+    pan_number = request.form.get('pan_number', '')
+    bank_account_number = request.form.get('bank_account_number', '')
+
+    # Required fields validation
+    if not first_name.strip():
+        flash('First Name is required.')
+        return redirect(url_for('admin_dashboard'))
+    if not last_name.strip():
+        flash('Last Name is required.')
+        return redirect(url_for('admin_dashboard'))
+    if not employee_id.strip():
+        flash('Employee ID is required.')
+        return redirect(url_for('admin_dashboard'))
+    if not password.strip():
+        flash('Password is required.')
+        return redirect(url_for('admin_dashboard'))
+
+    # Employee ID must be numeric
+    if not employee_id.isdigit():
+        flash('Employee ID must be numeric.')
+        return redirect(url_for('admin_dashboard'))
+
+    # Email validation
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, email):
+        flash('Invalid email address.')
+        return redirect(url_for('admin_dashboard'))
+
+    # Phone number validation (at least 10 digits)
+    if phone_number and (not phone_number.isdigit() or len(phone_number) < 10):
+        flash('Phone number must be at least 10 digits.')
+        return redirect(url_for('admin_dashboard'))
+
+    # Aadhar validation (12 digits)
+    if aadhar_number and (not aadhar_number.isdigit() or len(aadhar_number) != 12):
+        flash('Aadhar must be 12 digit number.')
+        return redirect(url_for('admin_dashboard'))
+
+    # PAN validation (alphanumeric, length 10)
+    if pan_number and (not re.match(r'^[A-Za-z0-9]{10}$', pan_number)):
+        flash('PAN must be alphanumeric and 10 characters long.')
+        return redirect(url_for('admin_dashboard'))
+
+    # Bank account number must be numeric
+    if bank_account_number and not bank_account_number.isdigit():
+        flash('Bank account number must be numeric.')
+        return redirect(url_for('admin_dashboard'))
+
+    existing_employee = User.query.filter_by(employee_id=employee_id).first()
+    if existing_employee:
+        flash('Employee ID already exists. Please use a different one.')
+        return redirect(url_for('admin_dashboard'))
+
+    existing_email = User.query.filter_by(email=email).first()
+    if existing_email:
+        flash('Email already exists. Please use a different email.')
+        return redirect(url_for('admin_dashboard'))
+
+    try:
+        user = User(first_name=first_name, last_name=last_name, employee_id=employee_id, email=email, phone_number=phone_number, is_admin=is_admin)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        
+        # Save profile details if provided
+        if aadhar_number or pan_number or bank_account_number:
+            profile = Profile(user_id=user.id)
+            profile.aadhar_number = aadhar_number or None
+            profile.pan_number = pan_number or None
+            profile.bank_account_number = bank_account_number or None
+            db.session.add(profile)
+            db.session.commit()
+            
+        flash('User created successfully!')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error creating user. Please try again.')
+    
+    return redirect(url_for('admin_dashboard'))
 
 # Admin Reset Password (admin can reset any user's password)
 @app.route('/admin_reset_password/<int:user_id>', methods=['POST'])
