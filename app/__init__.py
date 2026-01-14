@@ -18,6 +18,9 @@ app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'hr@bluestack.in')
 app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
 app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'hr@bluestack.in')
 
+# Azure Storage Configuration
+app.config['AZURE_STORAGE_CONNECTION_STRING'] = os.environ.get('AZURE_STORAGE_CONNECTION_STRING')
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login_manager = LoginManager(app)

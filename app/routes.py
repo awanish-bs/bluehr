@@ -2,11 +2,13 @@ from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_mail import Message
 from app import app, db, mail
-from app.models import User, Payslip, Profile, EmploymentHistory
+from app.models import User, Payslip, Profile, EmploymentHistory, Document
 from werkzeug.utils import secure_filename
 import os
 import json
 from datetime import datetime
+from app.utils.blob_storage import upload_blob, delete_blob, get_blob_sas_url
+import uuid
 
 
 # Route to delete all users except current admin
@@ -220,7 +222,7 @@ def create_user():
 
         # Aadhar validation (12 digits)
         if aadhar_number and (not aadhar_number.isdigit() or len(aadhar_number) != 12):
-            flash('Aadhar must be a 12 digit number.')
+            flash('Aadhar must be 12 digit number.')
             return render_template('create_user.html', form_data=request.form)
 
         # PAN validation (alphanumeric, length 10)
@@ -502,3 +504,131 @@ def admin_get_all_employment_history():
             'employment_history': employment_data
         })
     return jsonify(result)
+
+# Document Management - Admin
+@app.route('/admin/documents', methods=['GET'])
+@login_required
+def admin_get_documents():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    documents = Document.query.order_by(Document.upload_date.desc()).all()
+    
+    doc_list = []
+    for doc in documents:
+        doc_list.append({
+            'id': doc.id,
+            'original_filename': doc.original_filename,
+            'file_type': doc.file_type,
+            'upload_date': doc.upload_date.strftime('%Y-%m-%d %H:%M'),
+            'is_common': 'Yes' if doc.is_common else 'No',
+            'target': 'All' if doc.is_common else (doc.target_employee.first_name + ' ' + doc.target_employee.last_name if doc.target_employee else 'N/A')
+        })
+        
+    return jsonify(doc_list)
+
+@app.route('/admin/documents/upload', methods=['POST'])
+@login_required
+def admin_upload_document():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+
+    if 'document' not in request.files:
+        flash('No file part')
+        return redirect(url_for('admin_dashboard'))
+
+    file = request.files['document']
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(url_for('admin_dashboard'))
+
+    target_type = request.form.get('target_type')
+    employee_id = request.form.get('employee_id')
+
+    is_common = target_type == 'all'
+    target_employee_id = None if is_common else int(employee_id)
+
+    if file:
+        original_filename = file.filename
+        file_extension = os.path.splitext(original_filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        
+        try:
+            blob_url = upload_blob(file.stream, unique_filename)
+            
+            new_doc = Document(
+                filename=unique_filename,
+                original_filename=original_filename,
+                file_type=file.mimetype,
+                blob_url=blob_url,
+                uploaded_by_id=current_user.id,
+                is_common=is_common,
+                target_employee_id=target_employee_id
+            )
+            db.session.add(new_doc)
+            db.session.commit()
+            flash('Document uploaded successfully.')
+        except Exception as e:
+            flash(f'Error uploading document: {e}')
+
+    return redirect(url_for('admin_dashboard', _anchor='documents'))
+
+@app.route('/admin/documents/delete/<int:doc_id>', methods=['POST'])
+@login_required
+def admin_delete_document(doc_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('admin_dashboard'))
+
+    doc = Document.query.get_or_404(doc_id)
+    
+    try:
+        if delete_blob(doc.filename):
+            db.session.delete(doc)
+            db.session.commit()
+            flash('Document deleted successfully.')
+        else:
+            flash('Error deleting document from storage.')
+    except Exception as e:
+        flash(f'Error deleting document: {e}')
+        
+    return redirect(url_for('admin_dashboard', _anchor='documents'))
+
+# Document Management - Employee
+@app.route('/documents', methods=['GET'])
+@login_required
+def get_documents():
+    # Documents for everyone + documents for the current user
+    documents = Document.query.filter(
+        (Document.is_common == True) | (Document.target_employee_id == current_user.id)
+    ).order_by(Document.upload_date.desc()).all()
+    
+    doc_list = [{
+        'id': doc.id,
+        'original_filename': doc.original_filename,
+        'upload_date': doc.upload_date.strftime('%Y-%m-%d'),
+        'is_common': 'Company Policy' if doc.is_common else 'Personal'
+    } for doc in documents]
+    
+    return jsonify(doc_list)
+
+@app.route('/documents/download/<int:doc_id>', methods=['GET'])
+@login_required
+def download_document(doc_id):
+    doc = Document.query.get_or_404(doc_id)
+
+    # Security check: user can only download common docs or their own
+    if not doc.is_common and doc.target_employee_id != current_user.id:
+        # Admin can download any document
+        if not current_user.is_admin:
+            flash('Access denied.')
+            return redirect(url_for('employee_dashboard'))
+
+    try:
+        sas_url = get_blob_sas_url(doc.filename)
+        return redirect(sas_url)
+    except Exception as e:
+        flash(f"Error generating download link: {e}")
+        if current_user.is_admin:
+            return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('employee_dashboard'))

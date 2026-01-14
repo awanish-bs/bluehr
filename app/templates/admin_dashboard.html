@@ -19,6 +19,9 @@
     <li class="nav-item">
       <a class="nav-link" id="admin-tab" data-toggle="tab" href="#admin" role="tab" aria-controls="admin" aria-selected="false">Admin</a>
     </li>
+    <li class="nav-item">
+      <a class="nav-link" id="documents-tab" data-toggle="tab" href="#documents" role="tab" aria-controls="documents" aria-selected="false">Documents</a>
+    </li>
   </ul>
 
   <div class="tab-content mt-3" id="adminTabContent">
@@ -341,5 +344,114 @@
         </tbody>
       </table>
     </div>
+    <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
+      <div class="card">
+        <div class="card-header bg-light font-weight-bold">
+          <h5 class="mb-0">Document Management</h5>
+        </div>
+        <div class="card-body">
+          <!-- Document Upload Form -->
+          <div class="card mb-4">
+            <div class="card-header">
+              Upload New Document
+            </div>
+            <div class="card-body">
+              <form method="post" action="{{ url_for('admin_upload_document') }}" enctype="multipart/form-data">
+                <div class="form-group">
+                  <label for="document">Select File</label>
+                  <input type="file" class="form-control-file" id="document" name="document" required>
+                </div>
+                <div class="form-group">
+                  <label for="target_type">Target Audience</label>
+                  <select class="form-control" id="target_type" name="target_type">
+                    <option value="all">All Employees (Common Document)</option>
+                    <option value="specific">Specific Employee</option>
+                  </select>
+                </div>
+                <div class="form-group" id="employee-select-group" style="display: none;">
+                  <label for="employee_id">Select Employee</label>
+                  <select class="form-control" id="employee_id" name="employee_id">
+                    {% for emp in all_users %}
+                      {% if not emp.is_admin %}
+                        <option value="{{ emp.id }}">{{ emp.first_name }} {{ emp.last_name }} ({{ emp.employee_id }})</option>
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Uploaded Documents List -->
+          <h5>Uploaded Documents</h5>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Filename</th>
+                  <th>Target</th>
+                  <th>Type</th>
+                  <th>Upload Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="document-list-body">
+                <!-- Documents will be loaded here via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <script>
+    // Show/hide employee dropdown based on target type
+    document.getElementById('target_type').addEventListener('change', function() {
+      const employeeSelect = document.getElementById('employee-select-group');
+      if (this.value === 'specific') {
+        employeeSelect.style.display = 'block';
+      } else {
+        employeeSelect.style.display = 'none';
+      }
+    });
+
+    // Load documents when tab is clicked
+    document.getElementById('documents-tab').addEventListener('click', loadAdminDocuments);
+
+    function loadAdminDocuments() {
+      fetch('/admin/documents')
+        .then(response => response.json())
+        .then(data => {
+          const tbody = document.getElementById('document-list-body');
+          tbody.innerHTML = '';
+          if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No documents uploaded yet.</td></tr>';
+            return;
+          }
+          data.forEach(doc => {
+            const row = `
+              <tr>
+                <td><a href="/documents/download/${doc.id}" target="_blank">${doc.original_filename}</a></td>
+                <td>${doc.target}</td>
+                <td><span class="badge badge-secondary">${doc.file_type}</span></td>
+                <td>${doc.upload_date}</td>
+                <td>
+                  <form method="post" action="/admin/documents/delete/${doc.id}" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            `;
+            tbody.innerHTML += row;
+          });
+        })
+        .catch(error => {
+          console.error('Error loading documents:', error);
+          const tbody = document.getElementById('document-list-body');
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading documents.</td></tr>';
+        });
+    }
+  </script>
 {% endblock %}
