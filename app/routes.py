@@ -76,9 +76,14 @@ def employee_dashboard():
 @login_required
 def profile():
     if not current_user.profile:
-        profile = Profile(user_id=current_user.id)
-        db.session.add(profile)
+        new_profile = Profile(user_id=current_user.id)
+        db.session.add(new_profile)
         db.session.commit()
+    else:
+        # Ensure user_id is always set (fix for orphaned profiles)
+        if current_user.profile.user_id is None:
+            current_user.profile.user_id = current_user.id
+            db.session.commit()
 
     if request.method == 'POST':
         import re

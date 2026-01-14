@@ -21,7 +21,6 @@ class User(db.Model, UserMixin):
     reset_token_expiry = db.Column(db.DateTime)
     payslips = db.relationship('Payslip', backref='employee', lazy='dynamic')
     profile = db.relationship('Profile', back_populates='user', uselist=False, cascade="all, delete-orphan")
-    profile = db.relationship('Profile', back_populates='user', uselist=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

@@ -263,36 +263,79 @@
               <td>{{ user.employee_id }}</td>
               <td>{{ user.first_name }}</td>
               <td>{{ user.last_name }}</td>
-              {% if user.is_admin %}
-                <form method="post" action="{{ url_for('admin_edit_user', user_id=user.id) }}">
-                  <td><input type="email" class="form-control form-control-sm" name="email" value="{{ user.email }}"></td>
-                  <td>{{ user.phone_number or 'N/A' }}</td>
-                  <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
-                  <td>
-                    <button type="submit" class="btn btn-sm btn-success">Save</button>
-                  </td>
-                </form>
-              {% else %}
-                <td>{{ user.email }}</td>
-                <td>{{ user.phone_number or 'N/A' }}</td>
-                <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
-                <td>
-                  <div class="d-flex">
-                    <button type="button" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal{{ user.id }}">
-                      Reset Password
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger ml-2" data-toggle="modal" data-target="#deleteUserModal{{ user.id }}">
-                      Delete
+              <td>{{ user.email }}</td>
+              <td>{{ user.phone_number or 'N/A' }}</td>
+              <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+              <td>
+                {% if not user.is_admin %}
+                <div class="d-flex">
+                  <button type="button" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal{{ user.id }}">
+                    Reset Password
+                  </button>
+                  <button type="button" class="btn btn-sm btn-danger ml-2" data-toggle="modal" data-target="#deleteUserModal{{ user.id }}">
+                    Delete
+                  </button>
+                </div>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+            </tr>
+            
+            {% if not user.is_admin %}
+            <!-- Reset Password Modal -->
+            <div class="modal fade" id="resetPasswordModal{{ user.id }}" tabindex="-1" role="dialog" aria-labelledby="resetPasswordModalLabel{{ user.id }}" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="resetPasswordModalLabel{{ user.id }}">Reset Password for {{ user.first_name }} {{ user.last_name }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
                     </button>
                   </div>
-                  <!-- Reset Password Modal and Delete User Modal remain unchanged for non-admins -->
-                </td>
-              {% endif %}
-              <!-- Actions column handled above, remove duplicate buttons -->
-            </tr>
+                  <form method="post" action="{{ url_for('admin_reset_password', user_id=user.id) }}">
+                    <div class="modal-body">
+                      <div class="form-group">
+                        <label for="new_password{{ user.id }}">New Password</label>
+                        <input type="password" class="form-control" id="new_password{{ user.id }}" name="new_password" required>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-primary">Reset Password</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Delete User Modal -->
+            <div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteUserModalLabel{{ user.id }}" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="deleteUserModalLabel{{ user.id }}">Delete User</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <form method="post" action="{{ url_for('admin_delete_user', user_id=user.id) }}">
+                    <div class="modal-body">
+                      <p class="text-danger">Are you sure you want to delete <strong>{{ user.first_name }} {{ user.last_name }}</strong>?</p>
+                      <p>This action cannot be undone. All associated data will also be deleted.</p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn btn-danger">Delete User</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endif %}
           {% else %}
             <tr>
-              <td colspan="6">No users found.</td>
+              <td colspan="7">No users found.</td>
             </tr>
           {% endfor %}
         </tbody>
