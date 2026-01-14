@@ -1,6 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
-from app import app, db
+from flask_mail import Message
+from app import app, db, mail
 from app.models import User, Payslip, Profile
 from werkzeug.utils import secure_filename
 import os
@@ -230,3 +231,128 @@ def admin_edit_user(user_id):
     flash(f'User {user.first_name} has been updated.')
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin_delete_payslip/<int:payslip_id>', methods=['POST'])
+@login_required
+def admin_delete_payslip(payslip_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('index'))
+    payslip = Payslip.query.get(payslip_id)
+    if not payslip:
+        flash('Payslip not found.')
+        return redirect(url_for('admin_dashboard'))
+    db.session.delete(payslip)
+    db.session.commit()
+    flash('Payslip deleted successfully.')
+    return redirect(url_for('admin_dashboard'))
+
+
+# Employee request password change (sends email)
+@app.route('/request_password_change', methods=['GET', 'POST'])
+@login_required
+def request_password_change():
+    if request.method == 'POST':
+        user = current_user
+        token = user.generate_reset_token()
+        db.session.commit()
+        
+        # Send password reset email
+        reset_url = url_for('reset_password_with_token', token=token, _external=True)
+        try:
+            msg = Message(
+                subject='Password Reset Request - BlueHR',
+                recipients=[user.email]
+            )
+            msg.html = f'''
+            <h2>Password Reset Request</h2>
+            <p>Hi {user.first_name},</p>
+            <p>You have requested to reset your password. Click the link below to reset your password:</p>
+            <p><a href="{reset_url}">Reset Password</a></p>
+            <p>This link will expire in 1 hour.</p>
+            <p>If you did not request this, please ignore this email.</p>
+            <br>
+            <p>Best regards,</p>
+            <p>BlueHR Team</p>
+            '''
+            mail.send(msg)
+            flash('Password reset link has been sent to your email address.')
+        except Exception as e:
+            flash(f'Error sending email. Please contact administrator.')
+            print(f"Email error: {e}")
+        
+        return redirect(url_for('employee_dashboard'))
+    
+    return render_template('change_password.html')
+
+
+# Reset password with token (from email link)
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password_with_token(token):
+    user = User.query.filter_by(reset_token=token).first()
+    
+    if not user or not user.verify_reset_token(token):
+        flash('Invalid or expired reset link.')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        
+        if new_password != confirm_password:
+            flash('Passwords do not match.')
+            return render_template('reset_password.html', token=token)
+        
+        user.set_password(new_password)
+        user.reset_token = None
+        user.reset_token_expiry = None
+        db.session.commit()
+        flash('Your password has been reset successfully. Please log in with your new password.', 'success')
+        return redirect(url_for('index'))
+    
+    return render_template('reset_password.html', token=token)
+
+
+# Forgot password (from login page)
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        employee_id = request.form['employee_id']
+        email = request.form['email']
+        
+        # Check if user exists with matching employee_id and email
+        user = User.query.filter_by(employee_id=employee_id, email=email).first()
+        
+        if not user:
+            flash('No account found with that Employee ID and Email combination.')
+            return render_template('forgot_password.html')
+        
+        # Generate reset token and send email
+        token = user.generate_reset_token()
+        db.session.commit()
+        
+        reset_url = url_for('reset_password_with_token', token=token, _external=True)
+        try:
+            msg = Message(
+                subject='Password Reset Request - BlueHR',
+                recipients=[user.email]
+            )
+            msg.html = f'''
+            <h2>Password Reset Request</h2>
+            <p>Hi {user.first_name},</p>
+            <p>You have requested to reset your password. Click the link below to reset your password:</p>
+            <p><a href="{reset_url}">Reset Password</a></p>
+            <p>This link will expire in 1 hour.</p>
+            <p>If you did not request this, please ignore this email.</p>
+            <br>
+            <p>Best regards,</p>
+            <p>BlueHR Team</p>
+            '''
+            mail.send(msg)
+            flash('Password reset link has been sent to your email address.')
+        except Exception as e:
+            flash('Error sending email. Please contact administrator.')
+            print(f"Email error: {e}")
+        
+        return redirect(url_for('index'))
+    
+    return render_template('forgot_password.html')

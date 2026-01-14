@@ -37,10 +37,15 @@
                   <strong>{{ employee.first_name }} {{ employee.last_name }}</strong>
                   <ul class="list-group list-group-flush">
                     {% for payslip in payslips %}
-                      <li class="list-group-item py-1">
-                        <a href="{{ url_for('static', filename=payslip.file_path) }}" target="_blank">
-                          Payslip - {{ payslip.upload_date.strftime('%Y-%m-%d') }}
-                        </a>
+                      <li class="list-group-item py-1 d-flex justify-content-between align-items-center">
+                        <span>
+                          <a href="{{ url_for('static', filename=payslip.file_path) }}" target="_blank">
+                            Payslip - {{ payslip.upload_date.strftime('%Y-%m-%d') }}
+                          </a>
+                        </span>
+                        <form method="post" action="{{ url_for('admin_delete_payslip', payslip_id=payslip.id) }}" style="display:inline;">
+                          <button type="submit" class="btn btn-sm btn-danger ml-2">Delete</button>
+                        </form>
                       </li>
                     {% else %}
                       <li class="list-group-item py-1 text-muted">No payslips found.</li>
@@ -204,66 +209,7 @@
                   <!-- Reset Password Modal and Delete User Modal remain unchanged for non-admins -->
                 </td>
               {% endif %}
-              <td>{{ user.phone_number or 'N/A' }}</td>
-              <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
-              <td>
-                <button type="button" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal{{ user.id }}">
-                  Reset Password
-                </button>
-                <button type="button" class="btn btn-sm btn-danger ml-1" data-toggle="modal" data-target="#deleteUserModal{{ user.id }}">
-                  Delete
-                </button>
-                
-                <!-- Reset Password Modal -->
-                <div class="modal fade" id="resetPasswordModal{{ user.id }}" tabindex="-1" role="dialog" aria-labelledby="resetPasswordModalLabel{{ user.id }}" aria-hidden="true">
-                  <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="resetPasswordModalLabel{{ user.id }}">Reset Password for {{ user.first_name }} {{ user.last_name }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                      </div>
-                      <form method="post" action="{{ url_for('admin_reset_password', user_id=user.id) }}">
-                        <div class="modal-body">
-                          <div class="form-group">
-                            <label for="new_password{{ user.id }}">New Password</label>
-                            <input type="password" class="form-control" id="new_password{{ user.id }}" name="new_password" required>
-                          </div>
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                          <button type="submit" class="btn btn-primary">Reset Password</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-                
-                <!-- Delete User Modal -->
-                <div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1" role="dialog" aria-labelledby="deleteUserModalLabel{{ user.id }}" aria-hidden="true">
-                  <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="deleteUserModalLabel{{ user.id }}">Delete User {{ user.first_name }} {{ user.last_name }}</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                      </div>
-                      <form method="post" action="{{ url_for('admin_delete_user', user_id=user.id) }}">
-                        <div class="modal-body">
-                          <p class="text-danger">Are you sure you want to delete user <strong>{{ user.first_name }} {{ user.last_name }}</strong>?</p>
-                          <p>This action cannot be undone. All associated payslips will also be deleted.</p>
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                          <button type="submit" class="btn btn-danger">Delete User</button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              </td>
+              <!-- Actions column handled above, remove duplicate buttons -->
             </tr>
           {% else %}
             <tr>

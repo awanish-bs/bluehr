@@ -5,3 +5,5 @@ psycopg2-binary
 Werkzeug
 gunicorn
 Flask-Migrate
+Flask-Mail
+python-dotenv

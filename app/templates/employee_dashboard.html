@@ -10,6 +10,9 @@
     <li class="nav-item">
       <a class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Profile</a>
     </li>
+    <li class="nav-item">
+      <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab" aria-controls="security" aria-selected="false">Security</a>
+    </li>
   </ul>
 
   <div class="tab-content mt-3" id="employeeTabContent">
@@ -27,6 +30,19 @@
     </div>
     <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
       {% include 'profile.html' %}
+    </div>
+    <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+      <div class="card" style="max-width: 500px;">
+        <div class="card-header">
+          <h5>Change Password</h5>
+        </div>
+        <div class="card-body">
+          <p>Click the button below to request a password reset link. The link will be sent to your registered email address: <strong>{{ user.email }}</strong></p>
+          <form method="post" action="{{ url_for('request_password_change') }}">
+            <button type="submit" class="btn btn-primary">Send Password Reset Email</button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}
