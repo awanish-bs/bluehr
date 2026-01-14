@@ -7,3 +7,4 @@ gunicorn
 Flask-Migrate
 Flask-Mail
 python-dotenv
+azure-storage-blob
