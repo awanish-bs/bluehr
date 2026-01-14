@@ -25,7 +25,7 @@
             </div>
             <div class="form-group col-md-6">
                 <label for="phone_number">Phone Number</label>
-                <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ user.phone_number or '' }}">
+                <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ user.phone_number or '' }}" pattern="\d{10,}" title="Enter a valid phone number (at least 10 digits)">
             </div>
         </div>
         <div class="form-row">
@@ -43,11 +43,11 @@
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="aadhar_number">Aadhar Number</label>
-                <input type="text" class="form-control" id="aadhar_number" name="aadhar_number" value="{{ user.profile.aadhar_number or '' }}">
+                <input type="text" class="form-control" id="aadhar_number" name="aadhar_number" value="{{ user.profile.aadhar_number or '' }}" pattern="[0-9]{12}" title="Aadhar must be a 12 digit number">
             </div>
             <div class="form-group col-md-6">
                 <label for="pan_number">PAN Number</label>
-                <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ user.profile.pan_number or '' }}">
+                <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ user.profile.pan_number or '' }}" pattern="[A-Za-z0-9]{10}" title="PAN must be alphanumeric and 10 characters long">
             </div>
         </div>
         <hr>
@@ -59,7 +59,7 @@
             </div>
             <div class="form-group col-md-6">
                 <label for="bank_account_number">Bank Account Number</label>
-                <input type="text" class="form-control" id="bank_account_number" name="bank_account_number" value="{{ user.profile.bank_account_number or '' }}">
+                <input type="text" class="form-control" id="bank_account_number" name="bank_account_number" value="{{ user.profile.bank_account_number or '' }}" pattern="[0-9]+" title="Bank account number must be numeric">
             </div>
         </div>
         <div class="form-group">

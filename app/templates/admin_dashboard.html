@@ -261,10 +261,10 @@
           {% for user in all_users %}
             <tr>
               <td>{{ user.employee_id }}</td>
+              <td>{{ user.first_name }}</td>
+              <td>{{ user.last_name }}</td>
               {% if user.is_admin %}
                 <form method="post" action="{{ url_for('admin_edit_user', user_id=user.id) }}">
-                  <td><input type="text" class="form-control form-control-sm" name="first_name" value="{{ user.first_name }}"></td>
-                  <td><input type="text" class="form-control form-control-sm" name="last_name" value="{{ user.last_name }}"></td>
                   <td><input type="email" class="form-control form-control-sm" name="email" value="{{ user.email }}"></td>
                   <td>{{ user.phone_number or 'N/A' }}</td>
                   <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
@@ -273,18 +273,18 @@
                   </td>
                 </form>
               {% else %}
-                <td>{{ user.first_name }}</td>
-                <td>{{ user.last_name }}</td>
                 <td>{{ user.email }}</td>
                 <td>{{ user.phone_number or 'N/A' }}</td>
                 <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
                 <td>
-                  <button type="button" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal{{ user.id }}">
-                    Reset Password
-                  </button>
-                  <button type="button" class="btn btn-sm btn-danger ml-1" data-toggle="modal" data-target="#deleteUserModal{{ user.id }}">
-                    Delete
-                  </button>
+                  <div class="d-flex">
+                    <button type="button" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#resetPasswordModal{{ user.id }}">
+                      Reset Password
+                    </button>
+                    <button type="button" class="btn btn-sm btn-danger ml-2" data-toggle="modal" data-target="#deleteUserModal{{ user.id }}">
+                      Delete
+                    </button>
+                  </div>
                   <!-- Reset Password Modal and Delete User Modal remain unchanged for non-admins -->
                 </td>
               {% endif %}

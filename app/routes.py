@@ -81,23 +81,53 @@ def profile():
         db.session.commit()
 
     if request.method == 'POST':
+        import re
         current_user.first_name = request.form['first_name']
         current_user.last_name = request.form['last_name']
         current_user.email = request.form['email']
-        current_user.phone_number = request.form['phone_number']
-        
+        phone_number = request.form['phone_number']
+        aadhar_number = request.form['aadhar_number']
+        pan_number = request.form['pan_number']
+        bank_account_number = request.form['bank_account_number']
+
+        # Email validation
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, current_user.email):
+            flash('Invalid email address.')
+            return redirect(url_for('employee_dashboard', _anchor='profile'))
+
+        # Phone number validation (at least 10 digits)
+        if phone_number and (not phone_number.isdigit() or len(phone_number) < 10):
+            flash('Phone number must be at least 10 digits.')
+            return redirect(url_for('employee_dashboard', _anchor='profile'))
+
+        # Aadhar validation (12 digits)
+        if aadhar_number and (not aadhar_number.isdigit() or len(aadhar_number) != 12):
+            flash('Aadhar must be a 12 digit number.')
+            return redirect(url_for('employee_dashboard', _anchor='profile'))
+
+        # PAN validation (alphanumeric, length 10)
+        if pan_number and (not re.match(r'^[A-Za-z0-9]{10}$', pan_number)):
+            flash('PAN must be alphanumeric and 10 characters long.')
+            return redirect(url_for('employee_dashboard', _anchor='profile'))
+
+        # Bank account number must be numeric
+        if bank_account_number and not bank_account_number.isdigit():
+            flash('Bank account number must be numeric.')
+            return redirect(url_for('employee_dashboard', _anchor='profile'))
+
+        current_user.phone_number = phone_number
         current_user.profile.date_of_birth = datetime.strptime(request.form['date_of_birth'], '%Y-%m-%d').date() if request.form['date_of_birth'] else None
         current_user.profile.address = request.form['address']
-        current_user.profile.aadhar_number = request.form['aadhar_number'] or None
-        current_user.profile.pan_number = request.form['pan_number'] or None
+        current_user.profile.aadhar_number = aadhar_number or None
+        current_user.profile.pan_number = pan_number or None
         current_user.profile.bank_name = request.form['bank_name']
-        current_user.profile.bank_account_number = request.form['bank_account_number']
+        current_user.profile.bank_account_number = bank_account_number
         current_user.profile.ifsc_code = request.form['ifsc_code']
-        
+
         db.session.commit()
         flash('Your profile has been updated.')
         return redirect(url_for('employee_dashboard', _anchor='profile'))
-        
     return render_template('profile.html', user=current_user)
 
 @app.route('/admin_dashboard')
@@ -140,6 +170,7 @@ def upload_payslip():
 @app.route('/create_user', methods=['GET', 'POST'])
 def create_user():
     if request.method == 'POST':
+        import re
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         employee_id = request.form['employee_id']
@@ -147,21 +178,78 @@ def create_user():
         phone_number = request.form.get('phone_number', '')
         password = request.form['password']
         is_admin = 'is_admin' in request.form
+        aadhar_number = request.form.get('aadhar_number', '')
+        pan_number = request.form.get('pan_number', '')
+        bank_account_number = request.form.get('bank_account_number', '')
+
+
+        # Required fields validation
+        if not first_name.strip():
+            flash('First Name is required.')
+            return render_template('create_user.html', form_data=request.form)
+        if not last_name.strip():
+            flash('Last Name is required.')
+            return render_template('create_user.html', form_data=request.form)
+        if not employee_id.strip():
+            flash('Employee ID is required.')
+            return render_template('create_user.html', form_data=request.form)
+        if not password.strip():
+            flash('Password is required.')
+            return render_template('create_user.html', form_data=request.form)
+
+        # Employee ID must be numeric
+        if not employee_id.isdigit():
+            flash('Employee ID must be numeric.')
+            return render_template('create_user.html', form_data=request.form)
+
+        # Email validation
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, email):
+            flash('Invalid email address.')
+            return render_template('create_user.html', form_data=request.form)
+
+        # Phone number validation (at least 10 digits)
+        if phone_number and (not phone_number.isdigit() or len(phone_number) < 10):
+            flash('Phone number must be at least 10 digits.')
+            return render_template('create_user.html', form_data=request.form)
+
+        # Aadhar validation (12 digits)
+        if aadhar_number and (not aadhar_number.isdigit() or len(aadhar_number) != 12):
+            flash('Aadhar must be a 12 digit number.')
+            return render_template('create_user.html', form_data=request.form)
+
+        # PAN validation (alphanumeric, length 10)
+        if pan_number and (not re.match(r'^[A-Za-z0-9]{10}$', pan_number)):
+            flash('PAN must be alphanumeric and 10 characters long.')
+            return render_template('create_user.html', form_data=request.form)
+
+        # Bank account number must be numeric
+        if bank_account_number and not bank_account_number.isdigit():
+            flash('Bank account number must be numeric.')
+            return render_template('create_user.html', form_data=request.form)
 
         existing_employee = User.query.filter_by(employee_id=employee_id).first()
         if existing_employee:
             flash('Employee ID already exists. Please use a different one.')
-            return redirect(url_for('create_user'))
+            return render_template('create_user.html', form_data=request.form)
 
         existing_email = User.query.filter_by(email=email).first()
         if existing_email:
             flash('Email already exists. Please use a different email.')
-            return redirect(url_for('create_user'))
+            return render_template('create_user.html', form_data=request.form)
 
         user = User(first_name=first_name, last_name=last_name, employee_id=employee_id, email=email, phone_number=phone_number, is_admin=is_admin)
         user.set_password(password)
         db.session.add(user)
         db.session.commit()
+        # Save profile details if provided
+        if aadhar_number or pan_number or bank_account_number:
+            profile = Profile(user_id=user.id)
+            profile.aadhar_number = aadhar_number or None
+            profile.pan_number = pan_number or None
+            profile.bank_account_number = bank_account_number or None
+            db.session.add(profile)
+            db.session.commit()
         flash('User created successfully')
         return redirect(url_for('index'))
     return render_template('create_user.html')
