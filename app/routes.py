@@ -649,7 +649,11 @@ def admin_upload_document():
     employee_id = request.form.get('employee_id')
 
     is_common = target_type == 'all'
-    target_employee_id = None if is_common else int(employee_id)
+    target_employee_id = None
+    
+    if not is_common and employee_id:
+        # Look up the user by their database id (not employee_id string)
+        target_employee_id = int(employee_id)
 
     if file:
         original_filename = file.filename

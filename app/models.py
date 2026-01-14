@@ -71,7 +71,7 @@ class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(256), nullable=False)
     original_filename = db.Column(db.String(256), nullable=False)
-    file_type = db.Column(db.String(50))
+    file_type = db.Column(db.String(128))
     blob_url = db.Column(db.String(512), nullable=False)
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
     uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
