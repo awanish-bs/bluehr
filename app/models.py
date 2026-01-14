@@ -57,3 +57,13 @@ class Profile(db.Model):
     bank_account_number = db.Column(db.String(32))
     ifsc_code = db.Column(db.String(11))
     user = db.relationship('User', back_populates='profile')
+
+
+class EmploymentHistory(db.Model):
+    """Stores employment history for employees in JSON format"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    # Store employment records as JSON: [{"company_name": "", "designation": "", "start_date": "", "end_date": ""}, ...]
+    employment_data = db.Column(db.Text, default='[]')  # JSON string
+    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    user = db.relationship('User', backref=db.backref('employment_history', uselist=False))

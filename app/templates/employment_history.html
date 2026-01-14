@@ -1,96 +1,191 @@
-{% extends "base.html" %}
-
-{% block content %}
-  <h2>Employment History</h2>
-
-  <!-- Add New Employment History Form -->
-  <div class="card mb-4">
-    <div class="card-header">Add New Employment</div>
-    <div class="card-body">
-      <form method="post" action="{{ url_for('employment_history') }}">
-        <div class="form-row">
-          <div class="form-group col-md-6">
-            <label for="company_name">Company Name</label>
-            <input type="text" class="form-control" id="company_name" name="company_name" required>
-          </div>
-          <div class="form-group col-md-6">
-            <label for="job_title">Job Title</label>
-            <input type="text" class="form-control" id="job_title" name="job_title" required>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group col-md-6">
-            <label for="start_date">Start Date</label>
-            <input type="date" class="form-control" id="start_date" name="start_date" required>
-          </div>
-          <div class="form-group col-md-6">
-            <label for="end_date">End Date</label>
-            <input type="date" class="form-control" id="end_date" name="end_date">
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="responsibilities">Responsibilities</label>
-          <textarea class="form-control" id="responsibilities" name="responsibilities" rows="3"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Add History</button>
-      </form>
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Employment History</h5>
+    <button type="button" class="btn btn-primary btn-sm" id="addEmploymentBtn">
+      <i class="fas fa-plus"></i> Add Employment
+    </button>
+  </div>
+  <div class="card-body">
+    <p class="text-muted mb-3">Add details of your previous employment history.</p>
+    
+    <div id="employmentList">
+      <!-- Employment entries will be loaded here dynamically -->
+    </div>
+    
+    <div id="noEmploymentMessage" class="text-muted" style="display: none;">
+      <p>No employment history added yet. Click "Add Employment" to add your previous work experience.</p>
+    </div>
+    
+    <div class="mt-3">
+      <button type="button" class="btn btn-success" id="saveEmploymentBtn">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
     </div>
   </div>
+</div>
 
-  <!-- Existing Employment History -->
-  {% for item in history %}
-    <div class="card mb-3">
-      <div class="card-body">
-        <h5 class="card-title">{{ item.job_title }} at {{ item.company_name }}</h5>
-        <h6 class="card-subtitle mb-2 text-muted">{{ item.start_date.strftime('%B %Y') }} - {{ item.end_date.strftime('%B %Y') if item.end_date else 'Present' }}</h6>
-        <p class="card-text">{{ item.responsibilities }}</p>
-        <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#editModal{{ item.id }}">Edit</button>
-        <form method="post" action="{{ url_for('delete_employment', history_id=item.id) }}" style="display:inline;">
-          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-        </form>
+<!-- Employment Entry Template -->
+<template id="employmentTemplate">
+  <div class="card mb-3 employment-entry">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <h6 class="card-title mb-0">Employment Record</h6>
+        <button type="button" class="btn btn-danger btn-sm delete-employment-btn">
+          <i class="fas fa-trash"></i> Delete
+        </button>
       </div>
-    </div>
-
-    <!-- Edit Modal -->
-    <div class="modal fade" id="editModal{{ item.id }}" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Edit Employment History</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Company Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control company-name" placeholder="Enter company name" required>
           </div>
-          <form method="post" action="{{ url_for('edit_employment', history_id=item.id) }}">
-            <div class="modal-body">
-              <div class="form-group">
-                <label>Company Name</label>
-                <input type="text" class="form-control" name="company_name" value="{{ item.company_name }}" required>
-              </div>
-              <div class="form-group">
-                <label>Job Title</label>
-                <input type="text" class="form-control" name="job_title" value="{{ item.job_title }}" required>
-              </div>
-              <div class="form-group">
-                <label>Start Date</label>
-                <input type="date" class="form-control" name="start_date" value="{{ item.start_date.strftime('%Y-%m-%d') }}" required>
-              </div>
-              <div class="form-group">
-                <label>End Date</label>
-                <input type="date" class="form-control" name="end_date" value="{{ item.end_date.strftime('%Y-%m-%d') if item.end_date }}">
-              </div>
-              <div class="form-group">
-                <label>Responsibilities</label>
-                <textarea class="form-control" name="responsibilities" rows="3">{{ item.responsibilities }}</textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="submit" class="btn btn-primary">Save changes</button>
-            </div>
-          </form>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Designation <span class="text-danger">*</span></label>
+            <input type="text" class="form-control designation" placeholder="Enter your designation" required>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Start Date <span class="text-danger">*</span></label>
+            <input type="date" class="form-control start-date" required>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>End Date</label>
+            <input type="date" class="form-control end-date">
+            <small class="text-muted">Leave empty if currently working</small>
+          </div>
         </div>
       </div>
     </div>
-  {% endfor %}
-{% endblock %}
+  </div>
+</template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const employmentList = document.getElementById('employmentList');
+  const noEmploymentMessage = document.getElementById('noEmploymentMessage');
+  const addEmploymentBtn = document.getElementById('addEmploymentBtn');
+  const saveEmploymentBtn = document.getElementById('saveEmploymentBtn');
+  const employmentTemplate = document.getElementById('employmentTemplate');
+  
+  // Load existing employment history
+  loadEmploymentHistory();
+  
+  // Add new employment entry
+  addEmploymentBtn.addEventListener('click', function() {
+    addEmploymentEntry();
+  });
+  
+  // Save employment history
+  saveEmploymentBtn.addEventListener('click', function() {
+    saveEmploymentHistory();
+  });
+  
+  function loadEmploymentHistory() {
+    fetch('/employment_history')
+      .then(response => response.json())
+      .then(data => {
+        employmentList.innerHTML = '';
+        if (data.length === 0) {
+          noEmploymentMessage.style.display = 'block';
+        } else {
+          noEmploymentMessage.style.display = 'none';
+          data.forEach(function(entry) {
+            addEmploymentEntry(entry);
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error loading employment history:', error);
+      });
+  }
+  
+  function addEmploymentEntry(data = null) {
+    noEmploymentMessage.style.display = 'none';
+    
+    const template = employmentTemplate.content.cloneNode(true);
+    const entry = template.querySelector('.employment-entry');
+    
+    if (data) {
+      entry.querySelector('.company-name').value = data.company_name || '';
+      entry.querySelector('.designation').value = data.designation || '';
+      entry.querySelector('.start-date').value = data.start_date || '';
+      entry.querySelector('.end-date').value = data.end_date || '';
+    }
+    
+    // Add delete functionality
+    entry.querySelector('.delete-employment-btn').addEventListener('click', function() {
+      entry.remove();
+      updateNoEmploymentMessage();
+    });
+    
+    employmentList.appendChild(entry);
+  }
+  
+  function updateNoEmploymentMessage() {
+    const entries = employmentList.querySelectorAll('.employment-entry');
+    noEmploymentMessage.style.display = entries.length === 0 ? 'block' : 'none';
+  }
+  
+  function saveEmploymentHistory() {
+    const entries = employmentList.querySelectorAll('.employment-entry');
+    const employmentData = [];
+    let isValid = true;
+    
+    entries.forEach(function(entry) {
+      const companyName = entry.querySelector('.company-name').value.trim();
+      const designation = entry.querySelector('.designation').value.trim();
+      const startDate = entry.querySelector('.start-date').value;
+      const endDate = entry.querySelector('.end-date').value;
+      
+      // Validate required fields
+      if (!companyName || !designation || !startDate) {
+        isValid = false;
+        entry.classList.add('border-danger');
+        return;
+      } else {
+        entry.classList.remove('border-danger');
+      }
+      
+      employmentData.push({
+        company_name: companyName,
+        designation: designation,
+        start_date: startDate,
+        end_date: endDate
+      });
+    });
+    
+    if (!isValid) {
+      alert('Please fill in all required fields (Company Name, Designation, and Start Date).');
+      return;
+    }
+    
+    fetch('/employment_history', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(employmentData)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Employment history saved successfully!');
+      } else {
+        alert('Error saving employment history: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error saving employment history:', error);
+      alert('Error saving employment history. Please try again.');
+    });
+  }
+});
+</script>

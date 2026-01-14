@@ -1,10 +1,11 @@
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_mail import Message
 from app import app, db, mail
-from app.models import User, Payslip, Profile
+from app.models import User, Payslip, Profile, EmploymentHistory
 from werkzeug.utils import secure_filename
 import os
+import json
 from datetime import datetime
 
 
@@ -356,3 +357,55 @@ def forgot_password():
         return redirect(url_for('index'))
     
     return render_template('forgot_password.html')
+
+
+# Employment History - Get current employee's history
+@app.route('/employment_history', methods=['GET'])
+@login_required
+def get_employment_history():
+    history = EmploymentHistory.query.filter_by(user_id=current_user.id).first()
+    if history:
+        employment_data = json.loads(history.employment_data)
+    else:
+        employment_data = []
+    return jsonify(employment_data)
+
+
+# Employment History - Save employee's history
+@app.route('/employment_history', methods=['POST'])
+@login_required
+def save_employment_history():
+    data = request.get_json()
+    if data is None:
+        return jsonify({'error': 'Invalid data'}), 400
+    
+    history = EmploymentHistory.query.filter_by(user_id=current_user.id).first()
+    if not history:
+        history = EmploymentHistory(user_id=current_user.id)
+        db.session.add(history)
+    
+    history.employment_data = json.dumps(data)
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Employment history saved successfully'})
+
+
+# Admin - View all employees' employment history
+@app.route('/admin/employment_history')
+@login_required
+def admin_get_all_employment_history():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    employees = User.query.filter_by(is_admin=False).all()
+    result = []
+    for emp in employees:
+        history = EmploymentHistory.query.filter_by(user_id=emp.id).first()
+        employment_data = json.loads(history.employment_data) if history else []
+        result.append({
+            'employee_id': emp.employee_id,
+            'first_name': emp.first_name,
+            'last_name': emp.last_name,
+            'email': emp.email,
+            'employment_history': employment_data
+        })
+    return jsonify(result)
