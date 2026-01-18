@@ -8,9 +8,6 @@
       <a class="nav-link active" id="finance-tab" data-toggle="tab" href="#finance" role="tab" aria-controls="finance" aria-selected="true">Finance</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" id="hr-tab" data-toggle="tab" href="#hr" role="tab" aria-controls="hr" aria-selected="false">HR</a>
-    </li>
-    <li class="nav-item">
       <a class="nav-link" id="employment-history-tab" data-toggle="tab" href="#employment-history" role="tab" aria-controls="employment-history" aria-selected="false">Employment History</a>
     </li>
     <li class="nav-item">
@@ -18,6 +15,9 @@
     </li>
     <li class="nav-item">
       <a class="nav-link" id="admin-tab" data-toggle="tab" href="#admin" role="tab" aria-controls="admin" aria-selected="false">Admin</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="hr-tab" data-toggle="tab" href="#hr" role="tab" aria-controls="hr" aria-selected="false">HR</a>
     </li>
     <li class="nav-item">
       <a class="nav-link" id="documents-tab" data-toggle="tab" href="#documents" role="tab" aria-controls="documents" aria-selected="false">Documents</a>
@@ -129,14 +129,93 @@
       </div>
     </div>
     <div class="tab-pane fade" id="hr" role="tabpanel" aria-labelledby="hr-tab">
-      <div class="card">
+      <div class="card mb-4">
         <div class="card-header bg-light font-weight-bold">
-          Onboarding/Offboarding
+          HR & Finance Documents (Admin Reference)
         </div>
         <div class="card-body">
-          <p>WIP</p>
+          <form method="post" action="{{ url_for('admin_upload_hr_finance_document') }}" enctype="multipart/form-data" class="mb-4">
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label for="hr_doc_type">Type</label>
+                <select class="form-control" id="hr_doc_type" name="doc_type" required>
+                  <option value="HR">HR</option>
+                  <option value="Finance">Finance</option>
+                </select>
+              </div>
+              <div class="form-group col-md-4">
+                <label for="hr_comments">Comments</label>
+                <input type="text" class="form-control" id="hr_comments" name="comments" maxlength="256" placeholder="Add comments (optional)">
+              </div>
+              <div class="form-group col-md-4">
+                <label for="hr_document">Select File</label>
+                <input type="file" class="form-control-file" id="hr_document" name="document" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload Document</button>
+          </form>
+          <h5>Uploaded Documents</h5>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Filename</th>
+                  <th>Type</th>
+                  <th>Comments</th>
+                  <th>Upload Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="hr-finance-doc-list">
+                <!-- HR/Finance documents will be loaded here via JavaScript -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+      <script>
+        // Load HR/Finance documents when HR tab is clicked
+        document.getElementById('hr-tab').addEventListener('click', function() {
+          setTimeout(loadHRFinanceDocuments, 100);
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+          if (window.location.hash === '#hr' || document.getElementById('hr-tab').classList.contains('active')) {
+            loadHRFinanceDocuments();
+          }
+        });
+        function loadHRFinanceDocuments() {
+          fetch('/admin/hr_finance_documents')
+            .then(response => response.json())
+            .then(data => {
+              const tbody = document.getElementById('hr-finance-doc-list');
+              tbody.innerHTML = '';
+              if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No documents uploaded yet.</td></tr>';
+                return;
+              }
+              data.forEach(doc => {
+                const row = `
+                  <tr>
+                    <td><a href="${doc.blob_url}" target="_blank">${doc.original_filename}</a></td>
+                    <td>${doc.doc_type}</td>
+                    <td>${doc.comments || ''}</td>
+                    <td>${doc.upload_date}</td>
+                    <td>
+                      <form method="post" action="/admin/hr_finance_documents/delete/${doc.id}" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                      </form>
+                    </td>
+                  </tr>
+                `;
+                tbody.innerHTML += row;
+              });
+            })
+            .catch(error => {
+              const tbody = document.getElementById('hr-finance-doc-list');
+              tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading documents.</td></tr>';
+            });
+        }
+      </script>
     </div>
     <div class="tab-pane fade" id="employment-history" role="tabpanel" aria-labelledby="employment-history-tab">
       <div class="card">

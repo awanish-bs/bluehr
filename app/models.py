@@ -67,6 +67,7 @@ class EmploymentHistory(db.Model):
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
     user = db.relationship('User', backref=db.backref('employment_history', uselist=False))
 
+
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(256), nullable=False)
@@ -80,3 +81,15 @@ class Document(db.Model):
 
     uploaded_by = db.relationship('User', foreign_keys=[uploaded_by_id])
     target_employee = db.relationship('User', foreign_keys=[target_employee_id])
+
+# HR/Finance Document Model
+class HRFinanceDocument(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(256), nullable=False)
+    original_filename = db.Column(db.String(256), nullable=False)
+    doc_type = db.Column(db.String(64), nullable=False)  # HR or Finance
+    comments = db.Column(db.String(256))
+    blob_url = db.Column(db.String(512), nullable=False)
+    upload_date = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    uploaded_by = db.relationship('User', foreign_keys=[uploaded_by_id])

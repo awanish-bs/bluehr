@@ -2,7 +2,76 @@ from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_mail import Message
 from app import app, db, mail
-from app.models import User, Payslip, Profile, EmploymentHistory, Document
+from app.models import User, Payslip, Profile, EmploymentHistory, Document, HRFinanceDocument
+@app.route('/admin/hr_finance_documents', methods=['GET'])
+@login_required
+def admin_get_hr_finance_documents():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    docs = HRFinanceDocument.query.order_by(HRFinanceDocument.upload_date.desc()).all()
+    doc_list = []
+    for doc in docs:
+        doc_list.append({
+            'id': doc.id,
+            'original_filename': doc.original_filename,
+            'doc_type': doc.doc_type,
+            'comments': doc.comments,
+            'upload_date': doc.upload_date.strftime('%Y-%m-%d %H:%M'),
+            'blob_url': doc.blob_url
+        })
+    return jsonify(doc_list)
+
+@app.route('/admin/hr_finance_documents/upload', methods=['POST'])
+@login_required
+def admin_upload_hr_finance_document():
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    if 'document' not in request.files:
+        flash('No file part')
+        return redirect(url_for('admin_dashboard', _anchor='hr'))
+    file = request.files['document']
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(url_for('admin_dashboard', _anchor='hr'))
+    doc_type = request.form.get('doc_type')
+    comments = request.form.get('comments')
+    original_filename = file.filename
+    file_extension = os.path.splitext(original_filename)[1]
+    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    try:
+        blob_url = upload_blob(file.stream, unique_filename)
+        new_doc = HRFinanceDocument(
+            filename=unique_filename,
+            original_filename=original_filename,
+            doc_type=doc_type,
+            comments=comments,
+            blob_url=blob_url,
+            uploaded_by_id=current_user.id
+        )
+        db.session.add(new_doc)
+        db.session.commit()
+        flash('Document uploaded successfully.')
+    except Exception as e:
+        flash(f'Error uploading document: {e}')
+    return redirect(url_for('admin_dashboard', _anchor='hr'))
+
+@app.route('/admin/hr_finance_documents/delete/<int:doc_id>', methods=['POST'])
+@login_required
+def admin_delete_hr_finance_document(doc_id):
+    if not current_user.is_admin:
+        flash('Access denied.')
+        return redirect(url_for('admin_dashboard', _anchor='hr'))
+    doc = HRFinanceDocument.query.get_or_404(doc_id)
+    try:
+        if delete_blob(doc.filename):
+            db.session.delete(doc)
+            db.session.commit()
+            flash('Document deleted successfully.')
+        else:
+            flash('Error deleting document from storage.')
+    except Exception as e:
+        flash(f'Error deleting document: {e}')
+    return redirect(url_for('admin_dashboard', _anchor='hr'))
 from werkzeug.utils import secure_filename
 import os
 import json
