@@ -53,7 +53,7 @@ def admin_upload_hr_finance_document():
         flash('Document uploaded successfully.')
     except Exception as e:
         flash(f'Error uploading document: {e}')
-    return redirect(url_for('admin_dashboard', _anchor='hr'))
+    return redirect(url_for('admin_dashboard') + '#hr')
 
 @app.route('/admin/hr_finance_documents/delete/<int:doc_id>', methods=['POST'])
 @login_required
@@ -71,7 +71,7 @@ def admin_delete_hr_finance_document(doc_id):
             flash('Error deleting document from storage.')
     except Exception as e:
         flash(f'Error deleting document: {e}')
-    return redirect(url_for('admin_dashboard', _anchor='hr'))
+    return redirect(url_for('admin_dashboard') + '#hr')
 from werkzeug.utils import secure_filename
 import os
 import json
@@ -101,7 +101,7 @@ def admin_delete_all_users():
 
     db.session.commit()
     flash('All users (except current admin) and all associated data have been deleted.')
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_dashboard') + '#admin')
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])

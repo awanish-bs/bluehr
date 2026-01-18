@@ -566,6 +566,16 @@
   </div>
 
   <script>
+    // Activate tab from URL anchor on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      var hash = window.location.hash;
+      if (hash) {
+        var tabLink = document.querySelector('a.nav-link[href="' + hash + '"]');
+        if (tabLink) {
+          $(tabLink).tab('show');
+        }
+      }
+    });
     // Show/hide employee dropdown based on target type
     document.getElementById('target_type').addEventListener('change', function() {
       const employeeSelect = document.getElementById('employee-select-group');
