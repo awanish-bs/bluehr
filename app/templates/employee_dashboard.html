@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Employee Dashboard</h2>
+  <h2>Welcome, {{ user.first_name }} {{ user.last_name }}</h2>
 
   <ul class="nav nav-tabs" id="employeeTab" role="tablist">
     <li class="nav-item">
@@ -14,10 +14,10 @@
       <a class="nav-link" id="employment-history-tab" data-toggle="tab" href="#employment-history" role="tab" aria-controls="employment-history" aria-selected="false">Employment History</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab" aria-controls="security" aria-selected="false">Security</a>
+      <a class="nav-link" id="documents-tab" data-toggle="tab" href="#documents" role="tab" aria-controls="documents" aria-selected="false">Documents</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" id="documents-tab" data-toggle="tab" href="#documents" role="tab" aria-controls="documents" aria-selected="false">Documents</a>
+      <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab" aria-controls="security" aria-selected="false">Security</a>
     </li>
   </ul>
 
@@ -39,19 +39,6 @@
     </div>
     <div class="tab-pane fade" id="employment-history" role="tabpanel" aria-labelledby="employment-history-tab">
       {% include 'employment_history.html' %}
-    </div>
-    <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
-      <div class="card" style="max-width: 500px;">
-        <div class="card-header">
-          <h5>Change Password</h5>
-        </div>
-        <div class="card-body">
-          <p>Click the button below to request a password reset link. The link will be sent to your registered email address: <strong>{{ user.email }}</strong></p>
-          <form method="post" action="{{ url_for('request_password_change') }}">
-            <button type="submit" class="btn btn-primary">Send Password Reset Email</button>
-          </form>
-        </div>
-      </div>
     </div>
     <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
       <div class="card">
@@ -75,6 +62,19 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="security" role="tabpanel" aria-labelledby="security-tab">
+      <div class="card" style="max-width: 500px;">
+        <div class="card-header">
+          <h5>Change Password</h5>
+        </div>
+        <div class="card-body">
+          <p>Click the button below to request a password reset link. The link will be sent to your registered email address: <strong>{{ user.email }}</strong></p>
+          <form method="post" action="{{ url_for('request_password_change') }}">
+            <button type="submit" class="btn btn-primary">Send Password Reset Email</button>
+          </form>
         </div>
       </div>
     </div>
