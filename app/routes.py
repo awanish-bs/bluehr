@@ -1,8 +1,9 @@
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask import render_template, flash, redirect, url_for, request, jsonify, send_file
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_mail import Message
 from app import app, db, mail
-from app.models import User, Payslip, Profile, EmploymentHistory, Document, HRFinanceDocument
+from app.models import User, Payslip, Profile, EmploymentHistory, Document, HRFinanceDocument, ChatMessage
+import json
 @app.route('/admin/hr_finance_documents', methods=['GET'])
 @login_required
 def admin_get_hr_finance_documents():
@@ -694,7 +695,8 @@ def admin_get_documents():
             'file_type': doc.file_type,
             'upload_date': doc.upload_date.strftime('%Y-%m-%d %H:%M'),
             'is_common': 'Yes' if doc.is_common else 'No',
-            'target': 'All' if doc.is_common else (doc.target_employee.first_name + ' ' + doc.target_employee.last_name if doc.target_employee else 'N/A')
+            'target': 'All' if doc.is_common else (doc.target_employee.first_name + ' ' + doc.target_employee.last_name if doc.target_employee else 'N/A'),
+            'description': doc.description or ''
         })
         
     return jsonify(doc_list)
@@ -716,6 +718,7 @@ def admin_upload_document():
 
     target_type = request.form.get('target_type')
     employee_id = request.form.get('employee_id')
+    description = request.form.get('description', '').strip()
 
     is_common = target_type == 'all'
     target_employee_id = None
@@ -737,6 +740,7 @@ def admin_upload_document():
                 original_filename=original_filename,
                 file_type=file.mimetype,
                 blob_url=blob_url,
+                description=description,
                 uploaded_by_id=current_user.id,
                 is_common=is_common,
                 target_employee_id=target_employee_id
@@ -783,7 +787,8 @@ def get_documents():
         'id': doc.id,
         'original_filename': doc.original_filename,
         'upload_date': doc.upload_date.strftime('%Y-%m-%d'),
-        'is_common': 'Company Policy' if doc.is_common else 'Personal'
+        'is_common': 'Company Policy' if doc.is_common else 'Personal',
+        'description': doc.description or ''
     } for doc in documents]
     
     return jsonify(doc_list)
@@ -808,3 +813,88 @@ def download_document(doc_id):
         if current_user.is_admin:
             return redirect(url_for('admin_dashboard'))
         return redirect(url_for('employee_dashboard'))
+
+
+@app.route('/chatbot', methods=['GET', 'POST'])
+@login_required
+def chatbot():
+    """HR Policy Assistant chatbot interface"""
+    chat_history = ChatMessage.query.filter_by(user_id=current_user.id)\
+        .order_by(ChatMessage.created_at.desc()).limit(20).all()
+    
+    if request.method == 'POST':
+        user_message = request.form.get('message')
+        
+        if user_message:
+            try:
+                # Lazy import to ensure .env is loaded first
+                from app.services.chatbot_service import ChatbotService
+                
+                # Get response from chatbot
+                chatbot_service = ChatbotService()
+                response_text, doc_ids = chatbot_service.get_response(user_message)
+                
+                # Save to database
+                chat_msg = ChatMessage(
+                    user_id=current_user.id,
+                    message=user_message,
+                    response=response_text,
+                    referenced_documents=json.dumps(doc_ids)
+                )
+                db.session.add(chat_msg)
+                db.session.commit()
+                
+                # Get document details for download links
+                documents = Document.query.filter(Document.id.in_(doc_ids)).all() if doc_ids else []
+                doc_info = [{'id': d.id, 'filename': d.original_filename} for d in documents]
+                
+                return jsonify({
+                    'success': True,
+                    'response': response_text,
+                    'documents': doc_info
+                })
+            except Exception as e:
+                return jsonify({
+                    'success': False,
+                    'response': f"Error: {str(e)}",
+                    'documents': []
+                })
+    
+    return render_template('chatbot.html', chat_history=chat_history)
+
+
+@app.route('/chatbot/clear', methods=['POST'])
+@login_required
+def clear_chatbot():
+    """Clear chat history for current user"""
+    try:
+        ChatMessage.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/chatbot/download/<int:doc_id>')
+@login_required
+def download_chatbot_document(doc_id):
+    """Download policy documents from chatbot interface"""
+    document = Document.query.get_or_404(doc_id)
+    
+    # Security check: only allow downloading policy documents (not payslips)
+    excluded_keywords = ['payslip', 'salary', 'compensation', 'payroll', 'pay slip', 'pay-slip']
+    filename_lower = document.filename.lower()
+    original_lower = document.original_filename.lower()
+    
+    if any(keyword in filename_lower for keyword in excluded_keywords) or \
+       any(keyword in original_lower for keyword in excluded_keywords):
+        flash('Access denied to this document', 'danger')
+        return redirect(url_for('chatbot'))
+    
+    try:
+        # Generate SAS URL and redirect
+        sas_url = get_blob_sas_url(document.filename)
+        return redirect(sas_url)
+    except Exception as e:
+        flash(f"Error generating download link: {str(e)}")
+        return redirect(url_for('chatbot'))

@@ -52,6 +52,7 @@
               <thead>
                 <tr>
                   <th>Document Name</th>
+                  <th>Description</th>
                   <th>Category</th>
                   <th>Date Uploaded</th>
                   <th>Download</th>
@@ -91,13 +92,14 @@
         const tbody = document.getElementById('employee-document-list');
         tbody.innerHTML = '';
         if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No documents available.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No documents available.</td></tr>';
           return;
         }
         data.forEach(doc => {
           const row = `
             <tr>
               <td>${doc.original_filename}</td>
+              <td><small class="text-muted">${doc.description || 'No description'}</small></td>
               <td><span class="badge badge-info">${doc.is_common}</span></td>
               <td>${doc.upload_date}</td>
               <td>

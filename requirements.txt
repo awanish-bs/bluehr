@@ -8,3 +8,6 @@ Flask-Migrate
 Flask-Mail
 python-dotenv
 azure-storage-blob
+google-generativeai>=0.3.0
+PyPDF2>=3.0.0
+python-docx>=0.8.11

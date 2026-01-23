@@ -520,6 +520,10 @@
                   <input type="file" class="form-control-file" id="document" name="document" required>
                 </div>
                 <div class="form-group">
+                  <label for="description">Description</label>
+                  <textarea class="form-control" id="description" name="description" rows="2" placeholder="Enter a brief description of the document (optional)"></textarea>
+                </div>
+                <div class="form-group">
                   <label for="target_type">Target Audience</label>
                   <select class="form-control" id="target_type" name="target_type">
                     <option value="all">All Employees (Common Document)</option>
@@ -549,6 +553,7 @@
               <thead>
                 <tr>
                   <th>Filename</th>
+                  <th>Description</th>
                   <th>Target</th>
                   <th>Type</th>
                   <th>Upload Date</th>
@@ -606,13 +611,14 @@
           const tbody = document.getElementById('document-list-body');
           tbody.innerHTML = '';
           if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No documents uploaded yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No documents uploaded yet.</td></tr>';
             return;
           }
           data.forEach(doc => {
             const row = `
               <tr>
                 <td><a href="/documents/download/${doc.id}" target="_blank">${doc.original_filename}</a></td>
+                <td><small class="text-muted">${doc.description || 'No description'}</small></td>
                 <td>${doc.target}</td>
                 <td><span class="badge badge-secondary">${doc.file_type}</span></td>
                 <td>${doc.upload_date}</td>
@@ -629,7 +635,7 @@
         .catch(error => {
           console.error('Error loading documents:', error);
           const tbody = document.getElementById('document-list-body');
-          tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading documents.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading documents.</td></tr>';
         });
     }
 

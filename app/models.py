@@ -74,6 +74,7 @@ class Document(db.Model):
     original_filename = db.Column(db.String(256), nullable=False)
     file_type = db.Column(db.String(128))
     blob_url = db.Column(db.String(512), nullable=False)
+    description = db.Column(db.String(512))
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
     uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     is_common = db.Column(db.Boolean, default=False)
@@ -93,3 +94,15 @@ class HRFinanceDocument(db.Model):
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
     uploaded_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     uploaded_by = db.relationship('User', foreign_keys=[uploaded_by_id])
+
+
+class ChatMessage(db.Model):
+    """Stores chat messages between users and the HR Policy Assistant chatbot"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    response = db.Column(db.Text, nullable=False)
+    referenced_documents = db.Column(db.Text)  # JSON string of document IDs
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref=db.backref('chat_messages', lazy='dynamic'))

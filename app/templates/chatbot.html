@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-robot" viewBox="0 0 16 16" style="vertical-align: text-bottom;">
+                                <path d="M6 12.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5M3 8.062C3 6.76 4.235 5.765 5.53 5.886a26.6 26.6 0 0 0 4.94 0C11.765 5.765 13 6.76 13 8.062v1.157a.93.93 0 0 1-.765.935c-.845.147-2.34.346-4.235.346s-3.39-.2-4.235-.346A.93.93 0 0 1 3 9.219zm4.542-.827a.25.25 0 0 0-.217.068l-.92.9a25 25 0 0 1-1.871-.183.25.25 0 0 0-.068.495c.55.076 1.232.149 2.02.193a.25.25 0 0 0 .189-.071l.754-.736.847 1.71a.25.25 0 0 0 .404.062l.932-.97a25 25 0 0 0 1.922-.188.25.25 0 0 0-.068-.495c-.538.074-1.207.145-1.98.189a.25.25 0 0 0-.166.076l-.754.785-.842-1.7a.25.25 0 0 0-.182-.135"/>
+                                <path d="M8.5 1.866a1 1 0 1 0-1 0V3h-2A4.5 4.5 0 0 0 1 7.5V8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1v-.5A4.5 4.5 0 0 0 10.5 3h-2zM14 7.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7.5A3.5 3.5 0 0 1 5.5 4h5A3.5 3.5 0 0 1 14 7.5"/>
+                            </svg>
+                            HR Policy Assistant
+                        </h4>
+                        <small>Ask me anything about company policies, leave rules, and HR procedures</small>
+                    </div>
+                    <div>
+                        <button id="clear-chat-btn" class="btn btn-warning btn-sm me-2" title="Clear chat history">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                            </svg>
+                            Clear
+                        </button>
+                        <a href="{{ url_for('employee_dashboard') }}" class="btn btn-light btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                            </svg>
+                            Close
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div id="chat-container" style="height: 500px; overflow-y: auto; border: 1px solid #dee2e6; padding: 20px; margin-bottom: 20px; background-color: #f8f9fa; border-radius: 8px;">
+                        {% if not chat_history %}
+                        <div class="text-center text-muted mt-5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-chat-dots mb-3" viewBox="0 0 16 16">
+                                <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                                <path d="m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105A9 9 0 0 0 8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.4 10.4 0 0 1-.524 2.318l-.003.011a11 11 0 0 1-.244.637c-.079.186.074.394.273.362a22 22 0 0 0 .693-.125m.8-3.108a1 1 0 0 0-.287-.801C1.618 10.83 1 9.468 1 8c0-3.192 3.004-6 7-6s7 2.808 7 6-3.004 6-7 6a8 8 0 0 1-2.088-.272 1 1 0 0 0-.711.074c-.387.196-1.24.57-2.634.893a11 11 0 0 0 .398-2"/>
+                            </svg>
+                            <p>Start a conversation by asking a question about HR policies!</p>
+                            <p><small>Examples: "What is the leave policy?", "How do I apply for leave?", "What are the working hours?"</small></p>
+                        </div>
+                        {% endif %}
+                        
+                        {% for msg in chat_history|reverse %}
+                        <div class="mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="badge bg-info text-white me-2" style="padding: 5px 10px;">You</div>
+                                <div class="flex-grow-1">
+                                    <div class="p-3" style="background-color: #e3f2fd; border-radius: 10px; word-wrap: break-word;">
+                                        {{ msg.message }}
+                                    </div>
+                                    <small class="text-muted">{{ msg.created_at.strftime('%I:%M %p') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex align-items-start">
+                                <div class="badge bg-success text-white me-2" style="padding: 5px 10px;">AI</div>
+                                <div class="flex-grow-1">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 10px; border: 1px solid #dee2e6; word-wrap: break-word;">
+                                        {{ msg.response|replace('\n', '<br>')|safe }}
+                                    </div>
+                                    <small class="text-muted">{{ msg.created_at.strftime('%I:%M %p') }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <div id="typing-indicator" style="display: none;" class="mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="badge bg-success text-white me-2" style="padding: 5px 10px;">AI</div>
+                                <div class="flex-grow-1">
+                                    <div class="p-3" style="background-color: #ffffff; border-radius: 10px; border: 1px solid #dee2e6;">
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        Thinking...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="referenced-docs" class="mb-3"></div>
+                    
+                    <form id="chat-form">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="user-message" 
+                                   placeholder="Ask a question about HR policies..." required>
+                            <button class="btn btn-primary" type="submit" id="send-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16">
+                                    <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                                </svg>
+                                Send
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+#chat-container::-webkit-scrollbar {
+    width: 8px;
+}
+#chat-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+#chat-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+#chat-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+</style>
+
+<script>
+document.getElementById('chat-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log('Chat form submitted');
+    
+    const messageInput = document.getElementById('user-message');
+    const message = messageInput.value.trim();
+    const chatContainer = document.getElementById('chat-container');
+    const sendBtn = document.getElementById('send-btn');
+    const typingIndicator = document.getElementById('typing-indicator');
+    
+    if (!message) return;
+    
+    // Disable input while processing
+    messageInput.disabled = true;
+    sendBtn.disabled = true;
+    
+    // Add user message to chat
+    const userMessageHtml = `
+        <div class="mb-3">
+            <div class="d-flex align-items-start">
+                <div class="badge bg-info text-white me-2" style="padding: 5px 10px;">You</div>
+                <div class="flex-grow-1">
+                    <div class="p-3" style="background-color: #e3f2fd; border-radius: 10px; word-wrap: break-word;">
+                        ${escapeHtml(message)}
+                    </div>
+                    <small class="text-muted">${new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</small>
+                </div>
+            </div>
+        </div>
+    `;
+    chatContainer.innerHTML += userMessageHtml;
+    
+    // Show typing indicator
+    typingIndicator.style.display = 'block';
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    try {
+        // Send to server
+        const response = await fetch('/chatbot', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `message=${encodeURIComponent(message)}`
+        });
+        
+        const data = await response.json();
+        console.log('Chatbot response data:', data);
+        
+        // Hide typing indicator
+        typingIndicator.style.display = 'none';
+        
+        // Add bot response
+        const botResponse = data.response || 'No response received from the server.';
+        const botMessageHtml = `
+            <div class="mb-4">
+                <div class="d-flex align-items-start">
+                    <div class="badge bg-success text-white me-2" style="padding: 5px 10px;">AI</div>
+                    <div class="flex-grow-1">
+                        <div class="p-3" style="background-color: #ffffff; border-radius: 10px; border: 1px solid #dee2e6; word-wrap: break-word;">
+                            ${botResponse.toString().replace(/\n/g, '<br>')}
+                        </div>
+                        <small class="text-muted">${new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'})}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+        chatContainer.innerHTML += botMessageHtml;
+        
+        // Show downloadable documents
+        if (data.documents && data.documents.length > 0) {
+            let docsHtml = '<div class="alert alert-info"><strong>';
+            docsHtml += '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-arrow-down" viewBox="0 0 16 16">';
+            docsHtml += '<path d="M8.5 6.5a.5.5 0 0 0-1 0V9H6.354a.5.5 0 1 0 0 1H7.5v.854a.5.5 0 0 0 1 0V10h1.146a.5.5 0 1 0 0-1H8.5z"/>';
+            docsHtml += '<path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>';
+            docsHtml += '</svg> Referenced Documents:</strong><ul class="mb-0 mt-2">';
+            data.documents.forEach(doc => {
+                docsHtml += `<li><a href="/chatbot/download/${doc.id}" class="btn btn-sm btn-outline-primary mt-1" target="_blank">`;
+                docsHtml += '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">';
+                docsHtml += '<path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>';
+                docsHtml += '<path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>';
+                docsHtml += `</svg> ${escapeHtml(doc.filename)}</a></li>`;
+            });
+            docsHtml += '</ul></div>';
+            document.getElementById('referenced-docs').innerHTML = docsHtml;
+        } else {
+            document.getElementById('referenced-docs').innerHTML = '';
+        }
+        
+    } catch (error) {
+        console.error('Chatbot error:', error);
+        typingIndicator.style.display = 'none';
+        chatContainer.innerHTML += `
+            <div class="mb-4">
+                <div class="alert alert-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle" viewBox="0 0 16 16">
+                        <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                        <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                    </svg>
+                    Error: Could not get response. Please check the browser console for details.
+                </div>
+            </div>
+        `;
+    }
+    
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    messageInput.value = '';
+    messageInput.disabled = false;
+    sendBtn.disabled = false;
+    messageInput.focus();
+});
+
+// Clear chat button handler
+document.getElementById('clear-chat-btn').addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to clear all chat history?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/chatbot/clear', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Clear the chat container
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = `
+                <div class="text-center text-muted mt-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" class="bi bi-chat-dots mb-3" viewBox="0 0 16 16">
+                        <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                        <path d="m2.165 15.803.02-.004c1.83-.363 2.948-.842 3.468-1.105A9 9 0 0 0 8 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.4 10.4 0 0 1-.524 2.318l-.003.011a11 11 0 0 1-.244.637c-.079.186.074.394.273.362a22 22 0 0 0 .693-.125m.8-3.108a1 1 0 0 0-.287-.801C1.618 10.83 1 9.468 1 8c0-3.192 3.004-6 7-6s7 2.808 7 6-3.004 6-7 6a8 8 0 0 1-2.088-.272 1 1 0 0 0-.711.074c-.387.196-1.24.57-2.634.893a11 11 0 0 0 .398-2"/>
+                    </svg>
+                    <p>Start a conversation by asking a question about HR policies!</p>
+                    <p><small>Examples: "What is the leave policy?", "How do I apply for leave?", "What are the working hours?"</small></p>
+                </div>
+            `;
+            
+            // Clear referenced documents
+            document.getElementById('referenced-docs').innerHTML = '';
+        } else {
+            alert('Failed to clear chat history');
+        }
+    } catch (error) {
+        alert('Error clearing chat history');
+    }
+});
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}
