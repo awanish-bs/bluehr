@@ -724,14 +724,30 @@
           </div>
           <div class="card-body">
             <p class="text-muted">Select an employee to view their full details.</p>
-            <div class="list-group">
+            
+            <!-- Search Box -->
+            <div class="form-group">
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                  </span>
+                </div>
+                <input type="text" class="form-control" id="employee-search-input" placeholder="Search by name or employee ID...">
+              </div>
+            </div>
+            
+            <div class="list-group" id="employee-list">
               {% for user in all_users %}
                 {% if not user.is_admin %}
-                  <a href="#" class="list-group-item list-group-item-action employee-link" data-employee-id="{{ user.id }}">
+                  <a href="#" class="list-group-item list-group-item-action employee-link" data-employee-id="{{ user.id }}" data-employee-name="{{ user.first_name }} {{ user.last_name }}" data-employee-number="{{ user.employee_id }}">
                     {{ user.first_name }} {{ user.last_name }} ({{ user.employee_id }})
                   </a>
                 {% endif %}
               {% endfor %}
+            </div>
+            <div id="no-results-message" class="alert alert-info mt-3" style="display: none;">
+              No employees found matching your search.
             </div>
           </div>
         </div>
@@ -753,6 +769,36 @@
             loadEmployeeDetails(employeeId);
           });
         });
+
+        // Employee search functionality
+        const searchInput = document.getElementById('employee-search-input');
+        if (searchInput) {
+          searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            const employeeLinks = document.querySelectorAll('.employee-link');
+            const noResultsMessage = document.getElementById('no-results-message');
+            let visibleCount = 0;
+
+            employeeLinks.forEach(link => {
+              const employeeName = link.getAttribute('data-employee-name').toLowerCase();
+              const employeeNumber = link.getAttribute('data-employee-number').toLowerCase();
+              
+              if (employeeName.includes(searchTerm) || employeeNumber.includes(searchTerm)) {
+                link.style.display = 'block';
+                visibleCount++;
+              } else {
+                link.style.display = 'none';
+              }
+            });
+
+            // Show/hide no results message
+            if (visibleCount === 0 && searchTerm !== '') {
+              noResultsMessage.style.display = 'block';
+            } else {
+              noResultsMessage.style.display = 'none';
+            }
+          });
+        }
       });
 
       function loadEmployeeDetails(employeeId) {
