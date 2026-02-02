@@ -220,6 +220,48 @@ def admin_dashboard():
         employee_payslips[emp] = emp.payslips.order_by(Payslip.upload_date.desc()).all()
     return render_template('admin_dashboard.html', employees=employees, employee_payslips=employee_payslips, all_users=all_users)
 
+@app.route('/employee_view/<int:user_id>')
+@login_required
+def employee_view(user_id):
+    if not current_user.is_admin:
+        return redirect(url_for('employee_dashboard'))
+    
+    employee = User.query.get_or_404(user_id)
+    payslips = employee.payslips.all()
+    
+    # Fetch employment history
+    history = EmploymentHistory.query.filter_by(user_id=employee.id).first()
+    employee_history = json.loads(history.employment_data) if history else []
+    
+    # Fetch documents
+    documents = Document.query.filter(
+        (Document.is_common == True) | (Document.target_employee_id == employee.id)
+    ).order_by(Document.upload_date.desc()).all()
+    
+    return render_template('employee_view.html', employee=employee, user=employee, payslips=payslips, employee_history=employee_history, documents=documents)
+
+@app.route('/admin/employee_details/<int:user_id>')
+@login_required
+def admin_employee_details(user_id):
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    employee = User.query.get_or_404(user_id)
+    payslips = employee.payslips.all()
+    
+    # Fetch employment history
+    history = EmploymentHistory.query.filter_by(user_id=employee.id).first()
+    employee_history = json.loads(history.employment_data) if history else []
+    
+    # Fetch documents
+    documents = Document.query.filter(
+        (Document.is_common == True) | (Document.target_employee_id == employee.id)
+    ).order_by(Document.upload_date.desc()).all()
+    
+    return render_template('employee_detail_partial.html', employee=employee, user=employee, payslips=payslips, employee_history=employee_history, documents=documents)
+
+
+
 @app.route('/upload_payslip', methods=['POST'])
 @login_required
 def upload_payslip():

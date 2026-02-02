@@ -20,6 +20,9 @@
       <a class="nav-link" id="documents-tab" data-toggle="tab" href="#documents" role="tab" aria-controls="documents" aria-selected="false">Documents</a>
     </li>
     <li class="nav-item">
+      <a class="nav-link" id="employee-view-tab" data-toggle="tab" href="#employee-view" role="tab" aria-controls="employee-view" aria-selected="false">Employee View</a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link" id="others-tab" data-toggle="tab" href="#others" role="tab" aria-controls="others" aria-selected="false">Others</a>
     </li>
   </ul>
@@ -299,9 +302,7 @@
           }
         </script>
       </div>
-      <div class="tab-pane fade" id="others" role="tabpanel" aria-labelledby="others-tab">
-        <p>WIP</p>
-      </div>
+
     <div class="tab-pane fade" id="admin" role="tabpanel" aria-labelledby="admin-tab">
       <!-- Create User Section -->
       <div class="card mb-4">
@@ -568,7 +569,6 @@
         </div>
       </div>
     </div>
-  </div>
 
   <script>
     // Activate tab from URL anchor on page load
@@ -714,6 +714,71 @@
       });
     }
   </script>
+
+    <!-- Employee View Tab -->
+    <div class="tab-pane fade" id="employee-view" role="tabpanel" aria-labelledby="employee-view-tab">
+      <div id="employee-list-view">
+        <div class="card">
+          <div class="card-header bg-light font-weight-bold">
+            <h5 class="mb-0">View Employee Details</h5>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">Select an employee to view their full details.</p>
+            <div class="list-group">
+              {% for user in all_users %}
+                {% if not user.is_admin %}
+                  <a href="#" class="list-group-item list-group-item-action employee-link" data-employee-id="{{ user.id }}">
+                    {{ user.first_name }} {{ user.last_name }} ({{ user.employee_id }})
+                  </a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="employee-detail-view" style="display: none;">
+        <!-- Employee details will be loaded here -->
+      </div>
+    </div>
+
+    <script>
+      // Handle employee link clicks
+      document.addEventListener('DOMContentLoaded', function() {
+        const employeeLinks = document.querySelectorAll('.employee-link');
+        
+        employeeLinks.forEach(link => {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const employeeId = this.getAttribute('data-employee-id');
+            loadEmployeeDetails(employeeId);
+          });
+        });
+      });
+
+      function loadEmployeeDetails(employeeId) {
+        // Show loading indicator
+        document.getElementById('employee-list-view').style.display = 'none';
+        document.getElementById('employee-detail-view').innerHTML = '<div class="text-center py-5"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>';
+        document.getElementById('employee-detail-view').style.display = 'block';
+
+        // Fetch employee details
+        fetch('/admin/employee_details/' + employeeId)
+          .then(response => response.text())
+          .then(html => {
+            document.getElementById('employee-detail-view').innerHTML = html;
+          })
+          .catch(error => {
+            document.getElementById('employee-detail-view').innerHTML = '<div class="alert alert-danger">Error loading employee details.</div>';
+          });
+      }
+
+      function showEmployeeList() {
+        document.getElementById('employee-detail-view').style.display = 'none';
+        document.getElementById('employee-list-view').style.display = 'block';
+      }
+    </script>
+
+    <!-- Others Tab -->
     <div class="tab-pane fade" id="others" role="tabpanel" aria-labelledby="others-tab">
       <p>WIP</p>
     </div>

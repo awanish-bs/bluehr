@@ -1,0 +1,120 @@
+{% extends "admin_base.html" %}
+
+{% block admin_content %}
+  <div class="tab-content mt-3">
+    <div class="tab-pane fade show active">
+      <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 class="mb-0">Employee Details: {{ employee.first_name }} {{ employee.last_name }}</h2>
+          <a href="{{ url_for('admin_dashboard', _anchor='employee-view') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Employee List
+          </a>
+        </div>
+
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Profile Information</h5>
+          </div>
+          <div class="card-body">
+            {% include 'profile.html' %}
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Employment History</h5>
+          </div>
+          <div class="card-body">
+            {% if employee_history %}
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Company Name</th>
+                      <th>Designation</th>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for history in employee_history %}
+                      <tr>
+                        <td>{{ history.company_name }}</td>
+                        <td>{{ history.designation }}</td>
+                        <td>{{ history.start_date }}</td>
+                        <td>{{ history.end_date if history.end_date else 'Present' }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p>No employment history found for this employee.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card mb-4">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Payslips</h5>
+          </div>
+          <div class="card-body">
+            <div class="list-group">
+              {% for payslip in payslips %}
+                <a href="{{ url_for('static', filename=payslip.file_path) }}" class="list-group-item list-group-item-action" target="_blank">
+                  Payslip for {{ payslip.month_year }} (Uploaded on: {{ payslip.upload_date.strftime('%Y-%m-%d') }})
+                </a>
+              {% else %}
+                <p>No payslips found for this employee.</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Documents</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Document Name</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Date Uploaded</th>
+                    <th>Download</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for doc in documents %}
+                    <tr>
+                      <td>{{ doc.original_filename }}</td>
+                      <td><small class="text-muted">{{ doc.description or 'No description' }}</small></td>
+                      <td><span class="badge badge-info">{{ 'Company Policy' if doc.is_common else 'Personal' }}</span></td>
+                      <td>{{ doc.upload_date.strftime('%Y-%m-%d') }}</td>
+                      <td>
+                        <a href="{{ url_for('download_document', doc_id=doc.id) }}" class="btn btn-sm btn-primary" target="_blank">Download</a>
+                      </td>
+                    </tr>
+                  {% else %}
+                    <tr>
+                      <td colspan="5" class="text-center text-muted">No documents found for this employee.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
